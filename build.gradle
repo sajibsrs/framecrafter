@@ -1,0 +1,60 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+base {
+	archivesName = 'framecraft'
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+// Automated in-game check: ./gradlew runClientGameTest
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "framecraft-gametest"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
+
+// Optional: test alongside Iris + Sodium from a local Prism instance.
+//   ./gradlew runClientGameTest -PwithIris
+// Uses ../../shader/Filmicsoft/pack unless -PshaderPack=<dir> is given.
+if (project.hasProperty('withIris')) {
+	def prismMods = "${System.getProperty('user.home')}/Library/Application Support/PrismLauncher/instances/26.3/minecraft/mods"
+	def shaderPack = project.findProperty('shaderPack') ?: "${rootDir}/../../shader/Filmicsoft/pack"
+	dependencies {
+		localRuntime fileTree(dir: prismMods, include: ['iris-fabric-*.jar', 'sodium-fabric-*.jar'])
+	}
+	tasks.named('runClientGameTest') {
+		doFirst {
+			def run = file('build/run/clientGameTest')
+			ant.sync(todir: "${run}/shaderpacks/TestPack") { fileset(dir: shaderPack) }
+			file("${run}/config").mkdirs()
+			file("${run}/config/iris.properties").text = "enableShaders=true\nshaderPack=TestPack\ndisableUpdateMessage=true\n"
+		}
+	}
+}

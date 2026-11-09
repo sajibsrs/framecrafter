@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "framecraft",
+	"version": "${version}",
+	"name": "FrameCraft",
+	"description": "A camera for Minecraft: focal length, aperture and real depth of field.",
+	"authors": ["sajibsrs"],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["io.github.sajibsrs.framecraft.FrameCraft"]
+	},
+	"mixins": ["framecraft.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.0",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
