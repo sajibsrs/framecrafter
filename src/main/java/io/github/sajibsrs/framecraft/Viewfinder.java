@@ -10,8 +10,10 @@ public final class Viewfinder {
 	private static final int LINE = 0x66FFFFFF;
 	private static final int TEXT = 0xFFFFFFFF;
 	private static final int FOCUS = 0xFFFFFFFF;
-	private static final int FOCUS_LOCKED = 0xFF7CFF7C;
+	private static final int FOCUS_SHARP = 0xFF7CFF7C;
+	private static final int FOCUS_FAILED = 0xFFFF5A5A;
 	private static final int FLASH = 0xFFFFFFFF;
+	private static final int HINT = 0x99FFFFFF;
 
 	private Viewfinder() {
 	}
@@ -33,12 +35,18 @@ public final class Viewfinder {
 			g.fill(0, y, w, y + 1, LINE);
 		}
 
-		// Focus point.
+		// Focus point: green once the subject under it is sharp, red if the lens can't get there.
 		int cx = w / 2;
 		int cy = h / 2;
+		int fx = Math.round(cx + CameraState.focusPointX() * w / 2f);
+		int fy = Math.round(cy - CameraState.focusPointY() * h / 2f);
 		int s = 6;
-		int color = CameraState.isFocusLocked() ? FOCUS_LOCKED : FOCUS;
-		g.outline(cx - s, cy - s, s * 2 + 1, s * 2 + 1, color);
+		int color = switch (CameraState.afState()) {
+			case SHARP -> FOCUS_SHARP;
+			case FAILED -> FOCUS_FAILED;
+			case IDLE, HUNTING -> FOCUS;
+		};
+		g.outline(fx - s, fy - s, s * 2 + 1, s * 2 + 1, color);
 
 		// Settings readout along the bottom, like an LCD strip.
 		Font font = mc.font;
@@ -48,7 +56,16 @@ public final class Viewfinder {
 			formatDistance(CameraState.focusM()));
 		g.fill(0, h - 16, w, h, 0x88000000);
 		g.centeredText(font, readout, cx, h - 12, TEXT);
-		g.text(font, "Scroll: zoom   Ctrl+Scroll: aperture   Right: hold focus   Left: shoot", 4, 4, 0x99FFFFFF, true);
+		// Control hints; split over two lines when the window is too narrow for one.
+		String lens = "Scroll: zoom   Ctrl+Scroll: aperture";
+		String body = "Right: focus   Ctrl+Mouse: AF point   Left: shoot";
+		String both = lens + "   " + body;
+		if (font.width(both) <= w - 8) {
+			g.text(font, both, 4, 4, HINT, true);
+		} else {
+			g.text(font, lens, 4, 4, HINT, true);
+			g.text(font, body, 4, 14, HINT, true);
+		}
 	}
 
 	private static String formatStop(float n) {

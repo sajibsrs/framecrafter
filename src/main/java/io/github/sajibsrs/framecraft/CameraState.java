@@ -30,9 +30,12 @@ public final class CameraState {
 		6.3f, 7.1f, 8f, 9f, 10f, 11f, 13f, 14f, 16f, 18f, 20f, 22f
 	};
 
-	/** Nothing closer than the near clip plane, nothing farther than this counts as "infinity". */
-	private static final double MIN_FOCUS_M = 0.1;
+	/** Nothing farther than this counts as "infinity". */
 	private static final double MAX_FOCUS_M = 1000.0;
+	/** A subject counts as sharp when its blur circle is at most this many pixels in radius. */
+	private static final double SHARP_RADIUS_PX = 1.0;
+	/** How far the focus point may go from the centre, as a fraction of the half-frame. */
+	private static final float FOCUS_POINT_LIMIT = 0.9f;
 	private static final double AF_RANGE_M = 512.0;
 	private static final double ENTITY_AF_RANGE_M = 128.0;
 
@@ -42,9 +45,25 @@ public final class CameraState {
 	private static float shownFocalMm = 50f;
 	private static int apertureIndex = 6; // f/2.8
 
+	/** What the focus box shows. */
+	public enum AfState {
+		/** AF button not held; focus stays where it was left. */
+		IDLE,
+		/** Lens is still moving toward the subject. */
+		HUNTING,
+		/** Subject under the box is in focus. */
+		SHARP,
+		/** Nothing to focus on (sky), or the subject is closer than the lens can focus. */
+		FAILED
+	}
+
 	private static double focusM = 5.0;
 	private static double targetFocusM = 5.0;
-	private static boolean focusLocked;
+	private static AfState afState = AfState.IDLE;
+
+	/** Focus point as an offset from the frame centre, -1..1 on each axis, +y up. */
+	private static float focusPointX;
+	private static float focusPointY;
 
 	private static boolean captureRequested;
 	private static boolean capturing;
@@ -63,7 +82,9 @@ public final class CameraState {
 		active = !active;
 		if (active) {
 			shownFocalMm = focalMm;
-			focusLocked = false;
+			afState = AfState.IDLE;
+			focusPointX = 0f;
+			focusPointY = 0f;
 		}
 		captureRequested = false;
 		capturing = false;
@@ -81,8 +102,41 @@ public final class CameraState {
 		return focusM;
 	}
 
-	public static boolean isFocusLocked() {
-		return focusLocked;
+	public static AfState afState() {
+		return afState;
+	}
+
+	public static float focusPointX() {
+		return focusPointX;
+	}
+
+	public static float focusPointY() {
+		return focusPointY;
+	}
+
+	/** Moves the focus point by a mouse delta in window pixels, so the box follows the cursor. */
+	public static void moveFocusPoint(double dxPx, double dyPx, int windowWidth, int windowHeight) {
+		if (windowWidth <= 0 || windowHeight <= 0) {
+			return;
+		}
+		focusPointX = Mth.clamp(focusPointX + (float) (2.0 * dxPx / windowWidth), -FOCUS_POINT_LIMIT, FOCUS_POINT_LIMIT);
+		focusPointY = Mth.clamp(focusPointY - (float) (2.0 * dyPx / windowHeight), -FOCUS_POINT_LIMIT, FOCUS_POINT_LIMIT);
+	}
+
+	/**
+	 * Closest distance the lens can focus. Roughly what real lenses manage:
+	 * about 0.27 m at 14 mm, 0.45 m at 50 mm, 1.2 m at 200 mm.
+	 */
+	public static double minFocusM() {
+		return 0.2 + 5.0 * shownFocalMm / 1000.0;
+	}
+
+	/** Blur radius in pixels of something at depth {@code z} with the lens focused at {@code s}. Same formula as the shader. */
+	public static double blurRadiusPx(double z, double s, int frameHeightPx) {
+		double f = shownFocalMm / 1000.0;
+		double aperture = f / fNumber();
+		double coc = aperture * f * Math.abs(z - s) / (z * Math.max(s - f, 1e-4));
+		return 0.5 * coc * frameHeightPx / SENSOR_HEIGHT_M;
 	}
 
 	public static boolean isCapturing() {
@@ -133,15 +187,30 @@ public final class CameraState {
 			shownFocalMm = focalMm;
 		}
 
-		// Hold "use" (right mouse) to lock focus, like back-button AF.
-		focusLocked = mc.options.keyUse.isDown() && mc.gui.screen() == null;
-		if (!focusLocked) {
-			targetFocusM = autofocusDistance(mc);
+		// Back-button AF: focus only moves while "use" (right mouse) is held.
+		// Let go and it stays where it is, as with AF-ON on a real camera.
+		boolean afHeld = mc.options.keyUse.isDown() && mc.gui.screen() == null;
+		if (afHeld) {
+			double subject = subjectDepth(mc);
+			if (subject > 0) {
+				// The lens can't go nearer than its minimum; the subject then stays soft.
+				targetFocusM = Math.max(subject, minFocusM());
+			}
+			// Focus motor moves in log space so near and far pulls take similar time.
+			double afK = 1.0 - Math.exp(-dt * 10.0);
+			double logF = Math.log(focusM);
+			focusM = Math.exp(logF + (Math.log(targetFocusM) - logF) * afK);
+
+			if (subject <= 0 || subject < minFocusM()) {
+				afState = AfState.FAILED;
+			} else if (blurRadiusPx(subject, focusM, mc.gameRenderer.mainRenderTarget().height) <= SHARP_RADIUS_PX) {
+				afState = AfState.SHARP;
+			} else {
+				afState = AfState.HUNTING;
+			}
+		} else {
+			afState = AfState.IDLE;
 		}
-		// Focus motor moves in log space so near and far pulls take similar time.
-		double afK = 1.0 - Math.exp(-dt * 10.0);
-		double logF = Math.log(focusM);
-		focusM = Math.exp(logF + (Math.log(targetFocusM) - logF) * afK);
 
 		if (captureRequested) {
 			captureRequested = false;
@@ -155,34 +224,56 @@ public final class CameraState {
 		flashUntilMs = System.currentTimeMillis() + 120;
 	}
 
-	/** Distance along the view axis to whatever is under the crosshair. */
-	private static double autofocusDistance(Minecraft mc) {
+	/**
+	 * Depth along the view axis of whatever is under the focus point, or -1 if there is
+	 * nothing in range (open sky). View-axis depth, not ray length, is what the DOF shader
+	 * compares against, so an off-centre subject lands exactly in focus.
+	 */
+	private static double subjectDepth(Minecraft mc) {
 		Camera camera = mc.gameRenderer.mainCamera();
 		Entity viewer = mc.getCameraEntity();
 		if (!camera.isInitialized() || viewer == null) {
-			return targetFocusM;
+			return -1;
 		}
 
+		// Aim the ray through the focus point: offset the view axis by the frame's half-extents.
 		Vector3fc fwd = camera.forwardVector();
-		Vec3 dir = new Vec3(fwd.x(), fwd.y(), fwd.z());
+		Vector3fc up = camera.upVector();
+		Vector3fc left = camera.leftVector();
+		double tanV = Math.tan(Math.toRadians(verticalFovDeg()) / 2.0);
+		double tanH = tanV * mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+		double sx = -focusPointX * tanH; // "left" is negative x on screen
+		double sy = focusPointY * tanV;
+		Vec3 axis = new Vec3(fwd.x(), fwd.y(), fwd.z());
+		Vec3 dir = new Vec3(
+			fwd.x() + left.x() * sx + up.x() * sy,
+			fwd.y() + left.y() * sx + up.y() * sy,
+			fwd.z() + left.z() * sx + up.z() * sy).normalize();
+
 		Vec3 from = camera.position();
 		Vec3 to = from.add(dir.scale(AF_RANGE_M));
 
-		double best = MAX_FOCUS_M;
+		Vec3 hit = null;
+		double bestSq = Double.MAX_VALUE;
 		BlockHitResult block = mc.level.clip(new ClipContext(from, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, viewer));
 		if (block.getType() != HitResult.Type.MISS) {
-			best = block.getLocation().distanceTo(from);
-			to = block.getLocation();
+			hit = block.getLocation();
+			bestSq = hit.distanceToSqr(from);
 		}
 
 		// Entities only within a shorter range: a 512-block search box would be slow.
-		Vec3 entityTo = from.add(dir.scale(Math.min(best, ENTITY_AF_RANGE_M)));
+		double entityRange = Math.min(Math.sqrt(Math.min(bestSq, AF_RANGE_M * AF_RANGE_M)), ENTITY_AF_RANGE_M);
+		Vec3 entityTo = from.add(dir.scale(entityRange));
 		AABB search = viewer.getBoundingBox().expandTowards(entityTo.subtract(from)).inflate(1.0);
-		EntityHitResult entity = ProjectileUtil.getEntityHitResult(viewer, from, entityTo, search, e -> !e.isSpectator() && e.isPickable(), best * best);
-		if (entity != null) {
-			best = Math.min(best, entity.getLocation().distanceTo(from));
+		EntityHitResult entity = ProjectileUtil.getEntityHitResult(viewer, from, entityTo, search,
+			e -> !e.isSpectator() && e.isPickable(), entityRange * entityRange);
+		if (entity != null && entity.getLocation().distanceToSqr(from) < bestSq) {
+			hit = entity.getLocation();
 		}
 
-		return Mth.clamp(best, MIN_FOCUS_M, MAX_FOCUS_M);
+		if (hit == null) {
+			return -1;
+		}
+		return Math.min(hit.subtract(from).dot(axis), MAX_FOCUS_M);
 	}
 }
