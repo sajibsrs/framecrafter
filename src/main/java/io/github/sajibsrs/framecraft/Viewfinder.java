@@ -1,5 +1,7 @@
 package io.github.sajibsrs.framecraft;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -14,6 +16,7 @@ public final class Viewfinder {
 	private static final int FOCUS_FAILED = 0xFFFF5A5A;
 	private static final int FLASH = 0xFFFFFFFF;
 	private static final int HINT = 0x99FFFFFF;
+	private static final int PANEL = 0x88000000;
 
 	private Viewfinder() {
 	}
@@ -27,12 +30,14 @@ public final class Viewfinder {
 			return;
 		}
 
-		// Rule-of-thirds grid.
-		for (int i = 1; i <= 2; i++) {
-			int x = w * i / 3;
-			int y = h * i / 3;
-			g.fill(x, 0, x + 1, h, LINE);
-			g.fill(0, y, w, y + 1, LINE);
+		if (FramecraftConfig.showGrid) {
+			// Rule-of-thirds grid.
+			for (int i = 1; i <= 2; i++) {
+				int x = w * i / 3;
+				int y = h * i / 3;
+				g.fill(x, 0, x + 1, h, LINE);
+				g.fill(0, y, w, y + 1, LINE);
+			}
 		}
 
 		// Focus point: green once the subject under it is sharp, red if the lens can't get there.
@@ -56,9 +61,15 @@ public final class Viewfinder {
 			formatDistance(CameraState.focusM()));
 		g.fill(0, h - 16, w, h, 0x88000000);
 		g.centeredText(font, readout, cx, h - 12, TEXT);
-		// Control hints; split over two lines when the window is too narrow for one.
-		String lens = "Scroll: zoom   Ctrl+Scroll: aperture";
-		String body = "Right: focus   Ctrl+Mouse: AF point   Left: shoot";
+		if (FramecraftConfig.showCameraInfo) {
+			drawInfo(mc, g, font, h - 16);
+		}
+		// Control hints, not while the camera menu is open; split over two lines when narrow.
+		if (!FramecraftConfig.showHints || mc.gui.screen() != null) {
+			return;
+		}
+		String lens = "Scroll: zoom   Ctrl+Scroll: aperture   X: menu";
+		String body = "Right: focus   Ctrl+Mouse: focus point   Left: shoot";
 		String both = lens + "   " + body;
 		if (font.width(both) <= w - 8) {
 			g.text(font, both, 4, 4, HINT, true);
@@ -68,12 +79,87 @@ public final class Viewfinder {
 		}
 	}
 
+	/** What goes into a photo: only the info panel, and only when Camera Info is on. */
+	public static void drawPhotoInfo(Minecraft mc, GuiGraphicsExtractor g) {
+		if (FramecraftConfig.showCameraInfo) {
+			drawInfo(mc, g, mc.font, g.guiHeight());
+		}
+	}
+
+	/** Everything the info panel shows. */
+	private static List<String> infoLines(Minecraft mc) {
+		int frameW = mc.gameRenderer.mainRenderTarget().width;
+		int frameH = mc.gameRenderer.mainRenderTarget().height;
+		double sharp = CameraState.SHARP_RADIUS_PX;
+		double s = CameraState.focusM();
+
+		double vFov = CameraState.verticalFovDeg();
+		double hFov = Math.toDegrees(2.0 * Math.atan(Math.tan(Math.toRadians(vFov) / 2.0) * frameW / Math.max(1, frameH)));
+		double near = CameraState.dofNearM(s, sharp, frameH);
+		double far = CameraState.dofFarM(s, sharp, frameH);
+		double subject = CameraState.subjectM();
+		float focal = CameraState.focalMm();
+		float n = CameraState.fNumber();
+		float k = CameraState.distortionK();
+
+		List<String> lines = new ArrayList<>();
+		lines.add(String.format(Locale.ROOT, "Lens %.1fmm f/%s (pupil %.1fmm)   focus %s   AF %s", focal, formatStop(n), focal / n,
+			formatDistance(s), CameraState.afState().name().toLowerCase(Locale.ROOT)));
+		lines.add(String.format(Locale.ROOT, "FOV %.1f° x %.1f°   min focus %s", vFov, hFov, formatDistance(CameraState.minFocusM())));
+		lines.add("DOF " + formatDistance(near) + " - " + formatDistance(far)
+			+ (Double.isInfinite(far) ? "" : " (" + formatDistance(far - near) + ")")
+			+ "   hyperfocal " + formatDistance(CameraState.hyperfocalM(sharp, frameH)));
+		lines.add(subject > 0
+			? String.format(Locale.ROOT, "Subject %s (%.1f blocks)   blur %.1fpx", formatDistance(subject),
+				subject / CameraState.sceneScale(), CameraState.blurRadiusPx(subject, s, frameH))
+			: "Subject none");
+		lines.add(String.format(Locale.ROOT, "Bg blur %.1fpx   CoC %.0fµm   %.0f samples   %dx%d",
+			CameraState.blurRadiusPx(1.0e5, s, frameH), CameraState.cocDiameterM(sharp, frameH) * 1.0e6,
+			DofEffect.sampleCount(frameH, CameraState.isCapturing()), frameW, frameH));
+		FramecraftConfig.WhiteBalance wb = FramecraftConfig.whiteBalance;
+		lines.add(String.format(Locale.ROOT, "Exposure %+.1fEV   ISO %d   WB %s %dK tint %+d   %s",
+			FramecraftConfig.exposureEv, FramecraftConfig.iso(), wb.label, FramecraftConfig.kelvin(),
+			FramecraftConfig.effectiveTint(), FramecraftConfig.pictureStyle.label));
+		lines.add(String.format(Locale.ROOT, "Vignette %.1f stops at corner   %s", CameraState.vignetteEv(),
+			k == 0f ? "rectilinear, no distortion"
+				: String.format(Locale.ROOT, "distortion %s k=%+.1f%%", k > 0 ? "barrel" : "pincushion", k * 100f)));
+		return lines;
+	}
+
+	/**
+	 * Compact info panel in the bottom-left corner, its bottom edge at {@code bottom}, drawn at
+	 * a smaller text size. The scale keeps each font pixel a whole number of window pixels, so
+	 * the text stays crisp.
+	 */
+	private static void drawInfo(Minecraft mc, GuiGraphicsExtractor g, Font font, int bottom) {
+		List<String> lines = infoLines(mc);
+		int guiScale = Math.max(1, mc.getWindow().getGuiScale());
+		float scale = (float) Math.ceil(guiScale / 2.0) / guiScale;
+		int pad = 3;
+		int lineH = 9;
+		int textW = 0;
+		for (String line : lines) {
+			textW = Math.max(textW, font.width(line));
+		}
+		int panelW = textW + pad * 2;
+		int panelH = lines.size() * lineH + pad * 2 - 1;
+
+		g.pose().pushMatrix();
+		g.pose().translate(2f, bottom - 2 - panelH * scale);
+		g.pose().scale(scale, scale);
+		g.fill(0, 0, panelW, panelH, PANEL);
+		for (int i = 0; i < lines.size(); i++) {
+			g.text(font, lines.get(i), pad, pad + i * lineH, TEXT, false);
+		}
+		g.pose().popMatrix();
+	}
+
 	private static String formatStop(float n) {
 		return n == Math.floor(n) ? Integer.toString((int) n) : String.format(Locale.ROOT, "%.1f", n);
 	}
 
 	private static String formatDistance(double m) {
-		if (m >= 500.0) {
+		if (m >= 500.0 || Double.isInfinite(m)) {
 			return "∞";
 		}
 		return m < 10.0 ? String.format(Locale.ROOT, "%.1fm", m) : String.format(Locale.ROOT, "%dm", Math.round(m));

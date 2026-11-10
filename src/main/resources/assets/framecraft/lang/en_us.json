@@ -1,4 +1,13 @@
 {
-	"key.category.framecraft.framecraft": "FrameCraft",
-	"key.framecraft.toggle": "Camera mode"
+	"key.category.framecraft.framecraft": "Framecraft",
+	"key.framecraft.toggle": "Camera mode",
+	"key.framecraft.menu": "Camera menu",
+	"framecraft.settings.title": "Camera Menu",
+	"framecraft.settings.whiteBalance": "WB",
+	"framecraft.settings.pictureStyle": "Style",
+	"framecraft.settings.vignetting": "Vignetting",
+	"framecraft.settings.distortion": "Distortion",
+	"framecraft.settings.showCameraInfo": "Camera Info",
+	"framecraft.settings.showGrid": "Thirds Grid",
+	"framecraft.settings.showHints": "Hints"
 }

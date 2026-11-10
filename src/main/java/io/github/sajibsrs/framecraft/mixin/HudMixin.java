@@ -18,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Hud.class)
 public class HudMixin {
 	@Shadow @Final private Minecraft minecraft;
+	/** Vanilla's F1 state; isHidden() itself is forced true in camera mode below. */
+	@Shadow private boolean isHidden;
 
 	@Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
 	private void framecraft$viewfinder(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
@@ -25,7 +27,11 @@ public class HudMixin {
 			return;
 		}
 		this.minecraft.gameRenderer.gameRenderState().guiRenderState.isHudHidden = true;
-		if (!CameraState.isCapturing()) {
+		if (CameraState.isCapturing()) {
+			// A photo carries no viewfinder marks, only the camera info when it is switched on.
+			Viewfinder.drawPhotoInfo(this.minecraft, graphics);
+		} else if (!this.isHidden) {
+			// F1 hides the viewfinder too, for a clean live view.
 			Viewfinder.draw(this.minecraft, graphics);
 		}
 		ci.cancel();

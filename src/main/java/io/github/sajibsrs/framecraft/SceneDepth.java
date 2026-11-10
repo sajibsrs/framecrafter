@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
  * chain can sample it by name ("framecraft:scene_depth").
  */
 public final class SceneDepth extends AbstractTexture {
-	public static final Identifier ID = Identifier.fromNamespaceAndPath(FrameCraft.MOD_ID, "textures/effect/scene_depth.png");
+	public static final Identifier ID = Identifier.fromNamespaceAndPath(Framecraft.MOD_ID, "textures/effect/scene_depth.png");
 	private static final SceneDepth INSTANCE = new SceneDepth();
 	private static boolean registered;
 

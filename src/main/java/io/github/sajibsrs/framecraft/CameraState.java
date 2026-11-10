@@ -15,25 +15,27 @@ import org.joml.Vector3fc;
 
 /**
  * Everything the camera knows: lens settings, focus, and capture requests.
- * Lengths are in meters (1 block = 1 m), focal length is shown in mm.
+ * World positions are in blocks; the optics work in meters, one block being
+ * {@link #SCENE_SCALE} meters. Focal length is shown in mm. The sensor is full frame.
  */
 public final class CameraState {
-	/** Full-frame sensor: 36 x 24 mm. FOV is vertical in Minecraft, so height is what matters. */
-	public static final float SENSOR_HEIGHT_M = 0.024f;
-
 	public static final float MIN_FOCAL_MM = 14f;
 	public static final float MAX_FOCAL_MM = 200f;
+	/** Full-frame sensor height. FOV is vertical in Minecraft, so height is what matters. */
+	public static final float SENSOR_HEIGHT_M = 0.024f;
+	/** Meters per block. A player is 1.8 blocks tall, so one block is one meter. */
+	public static final double SCENE_SCALE = 1.0;
 
 	/** Third-stop aperture scale, as printed on real lenses. */
 	public static final float[] F_STOPS = {
-		1.4f, 1.6f, 1.8f, 2f, 2.2f, 2.5f, 2.8f, 3.2f, 3.5f, 4f, 4.5f, 5f, 5.6f,
+		1.2f, 1.4f, 1.6f, 1.8f, 2f, 2.2f, 2.5f, 2.8f, 3.2f, 3.5f, 4f, 4.5f, 5f, 5.6f,
 		6.3f, 7.1f, 8f, 9f, 10f, 11f, 13f, 14f, 16f, 18f, 20f, 22f
 	};
 
 	/** Nothing farther than this counts as "infinity". */
 	private static final double MAX_FOCUS_M = 1000.0;
 	/** A subject counts as sharp when its blur circle is at most this many pixels in radius. */
-	private static final double SHARP_RADIUS_PX = 1.0;
+	public static final double SHARP_RADIUS_PX = 1.0;
 	/** How far the focus point may go from the centre, as a fraction of the half-frame. */
 	private static final float FOCUS_POINT_LIMIT = 0.9f;
 	private static final double AF_RANGE_M = 512.0;
@@ -43,7 +45,7 @@ public final class CameraState {
 
 	private static float focalMm = 50f;
 	private static float shownFocalMm = 50f;
-	private static int apertureIndex = 6; // f/2.8
+	private static int apertureIndex = 7; // f/2.8
 
 	/** What the focus box shows. */
 	public enum AfState {
@@ -57,9 +59,12 @@ public final class CameraState {
 		FAILED
 	}
 
-	private static double focusM = 5.0;
-	private static double targetFocusM = 5.0;
+	/** Focus distance in blocks. */
+	private static double focusBlocks = 5.0;
+	private static double targetFocusBlocks = 5.0;
 	private static AfState afState = AfState.IDLE;
+	/** Depth in blocks of whatever is under the focus point, -1 if nothing; refreshed while AF is held or info is shown. */
+	private static double subjectBlocks = -1;
 
 	/** Focus point as an offset from the frame centre, -1..1 on each axis, +y up. */
 	private static float focusPointX;
@@ -98,8 +103,17 @@ public final class CameraState {
 		return F_STOPS[apertureIndex];
 	}
 
+	public static float sensorHeightM() {
+		return SENSOR_HEIGHT_M;
+	}
+
+	public static double sceneScale() {
+		return SCENE_SCALE;
+	}
+
+	/** Focus distance in scene meters. */
 	public static double focusM() {
-		return focusM;
+		return focusBlocks * sceneScale();
 	}
 
 	public static AfState afState() {
@@ -131,12 +145,75 @@ public final class CameraState {
 		return 0.2 + 5.0 * shownFocalMm / 1000.0;
 	}
 
-	/** Blur radius in pixels of something at depth {@code z} with the lens focused at {@code s}. Same formula as the shader. */
+	/** Blur radius in pixels of something at depth {@code z} with the lens focused at {@code s}, both in scene meters. Same formula as the shader. */
 	public static double blurRadiusPx(double z, double s, int frameHeightPx) {
 		double f = shownFocalMm / 1000.0;
 		double aperture = f / fNumber();
 		double coc = aperture * f * Math.abs(z - s) / (z * Math.max(s - f, 1e-4));
-		return 0.5 * coc * frameHeightPx / SENSOR_HEIGHT_M;
+		return 0.5 * coc * frameHeightPx / sensorHeightM();
+	}
+
+	/** Subject distance in scene meters, or -1 if nothing is under the focus point. */
+	public static double subjectM() {
+		return subjectBlocks > 0 ? subjectBlocks * sceneScale() : -1;
+	}
+
+	/**
+	 * Radial distortion coefficient: positive is barrel, negative pincushion. Roughly what real
+	 * zooms show uncorrected: strong barrel at 14 mm, none near 50 mm, mild pincushion at 200 mm.
+	 */
+	public static float distortionK() {
+		if (!FramecraftConfig.distortion) {
+			return 0f;
+		}
+		double f = shownFocalMm;
+		if (f <= 50.0) {
+			return (float) (0.06 * Math.log(50.0 / f) / Math.log(50.0 / 14.0));
+		}
+		return (float) (-0.02 * Math.min(1.0, Math.log(f / 50.0) / Math.log(4.0)));
+	}
+
+	/**
+	 * Light falloff at the frame corner, in stops. Optical vignetting is strong wide open and
+	 * gone about three stops down; natural (cos^4) falloff grows on wide lenses.
+	 */
+	public static float vignetteEv() {
+		if (!FramecraftConfig.vignetting) {
+			return 0f;
+		}
+		double stopsDown = 2.0 * Math.log(fNumber() / F_STOPS[0]) / Math.log(2.0);
+		double optical = 1.2 * Math.max(0.0, 1.0 - stopsDown / 3.0);
+		double natural = 0.1 + 0.3 * Math.clamp(Math.log(200.0 / shownFocalMm) / Math.log(200.0 / 14.0), 0.0, 1.0);
+		return (float) (optical + natural);
+	}
+
+	/**
+	 * Hyperfocal distance for a blur limit of {@code radiusPx}, derived from {@link #blurRadiusPx}
+	 * so it agrees with the shader: focus here and everything from H/2 to infinity is sharp.
+	 */
+	public static double hyperfocalM(double radiusPx, int frameHeightPx) {
+		double f = shownFocalMm / 1000.0;
+		double c = cocDiameterM(radiusPx, frameHeightPx);
+		return f * f / (fNumber() * c) + f;
+	}
+
+	/** Nearest sharp depth with the lens focused at {@code s}. */
+	public static double dofNearM(double s, double radiusPx, int frameHeightPx) {
+		double f = shownFocalMm / 1000.0;
+		double h = hyperfocalM(radiusPx, frameHeightPx);
+		return s * (h - f) / (h + s - 2 * f);
+	}
+
+	/** Farthest sharp depth with the lens focused at {@code s}, or infinity at or past the hyperfocal distance. */
+	public static double dofFarM(double s, double radiusPx, int frameHeightPx) {
+		double f = shownFocalMm / 1000.0;
+		double h = hyperfocalM(radiusPx, frameHeightPx);
+		return s >= h ? Double.POSITIVE_INFINITY : s * (h - f) / (h - s);
+	}
+
+	/** Blur-circle diameter on the sensor, in meters, that maps to {@code radiusPx} on screen. */
+	public static double cocDiameterM(double radiusPx, int frameHeightPx) {
+		return 2.0 * radiusPx * sensorHeightM() / Math.max(1, frameHeightPx);
 	}
 
 	public static boolean isCapturing() {
@@ -149,7 +226,7 @@ public final class CameraState {
 
 	/** Vertical field of view for the current focal length: 2 * atan(h / 2f). */
 	public static float verticalFovDeg() {
-		double halfHeightMm = SENSOR_HEIGHT_M * 1000.0 / 2.0;
+		double halfHeightMm = sensorHeightM() * 1000.0 / 2.0;
 		return (float) Math.toDegrees(2.0 * Math.atan(halfHeightMm / shownFocalMm));
 	}
 
@@ -190,20 +267,24 @@ public final class CameraState {
 		// Back-button AF: focus only moves while "use" (right mouse) is held.
 		// Let go and it stays where it is, as with AF-ON on a real camera.
 		boolean afHeld = mc.options.keyUse.isDown() && mc.gui.screen() == null;
+		if (afHeld || FramecraftConfig.showCameraInfo) {
+			subjectBlocks = subjectDepth(mc);
+		}
 		if (afHeld) {
-			double subject = subjectDepth(mc);
+			double subject = subjectBlocks;
+			double minFocusBlocks = minFocusM() / sceneScale();
 			if (subject > 0) {
 				// The lens can't go nearer than its minimum; the subject then stays soft.
-				targetFocusM = Math.max(subject, minFocusM());
+				targetFocusBlocks = Math.max(subject, minFocusBlocks);
 			}
 			// Focus motor moves in log space so near and far pulls take similar time.
 			double afK = 1.0 - Math.exp(-dt * 10.0);
-			double logF = Math.log(focusM);
-			focusM = Math.exp(logF + (Math.log(targetFocusM) - logF) * afK);
+			double logF = Math.log(focusBlocks);
+			focusBlocks = Math.exp(logF + (Math.log(targetFocusBlocks) - logF) * afK);
 
-			if (subject <= 0 || subject < minFocusM()) {
+			if (subject <= 0 || subject < minFocusBlocks) {
 				afState = AfState.FAILED;
-			} else if (blurRadiusPx(subject, focusM, mc.gameRenderer.mainRenderTarget().height) <= SHARP_RADIUS_PX) {
+			} else if (blurRadiusPx(subject * sceneScale(), focusM(), mc.gameRenderer.mainRenderTarget().height) <= SHARP_RADIUS_PX) {
 				afState = AfState.SHARP;
 			} else {
 				afState = AfState.HUNTING;

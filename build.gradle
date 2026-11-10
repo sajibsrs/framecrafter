@@ -50,6 +50,8 @@ if (project.hasProperty('withIris')) {
 		localRuntime fileTree(dir: prismMods, include: ['iris-fabric-*.jar', 'sodium-fabric-*.jar'])
 	}
 	tasks.named('runClientGameTest') {
+		// The setup below uses file() and ant from the build script, which the configuration cache can't store.
+		notCompatibleWithConfigurationCache('copies the shader pack with script helpers')
 		doFirst {
 			def run = file('build/run/clientGameTest')
 			ant.sync(todir: "${run}/shaderpacks/TestPack") { fileset(dir: shaderPack) }

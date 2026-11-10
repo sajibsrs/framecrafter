@@ -16,7 +16,7 @@ layout(std140) uniform SamplerInfo {
 
 layout(std140) uniform DofConfig {
     vec4 Lens;        // focus distance (m), aperture diameter (m), focal length (m), pixels per sensor meter
-    vec4 DepthParams; // depth a, depth b (d = a + b/z), max blur radius (px), spiral step
+    vec4 DepthParams; // depth a, depth b (d = a + b/z), max blur radius (px), sample count
     vec4 Extra;       // depth value of the sky, debug view flag
 };
 
@@ -61,13 +61,22 @@ void main() {
     float centerR = blurRadius(centerZ);
     vec3 color = texture(InSampler, texCoord).rgb;
     float maxR = DepthParams.z;
-    float step = DepthParams.w;
+    int count = int(DepthParams.w);
 
-    float total = 1.0;
-    float radius = step;
-    float angle = ign(gl_FragCoord.xy) * 6.2831853;
-    for (int i = 0; i < 1024 && radius < maxR; i++) {
+    // Samples spaced evenly in radius, not area, so even a 1-2 px blur gets plenty of taps
+    // close in. Each tap is weighted by the ring area it stands for (2*pi*r*dr), which keeps
+    // the disc average unbiased. Per-pixel rotation and radial offset turn the fixed pattern
+    // into fine grain instead of rings.
+    float noise = ign(gl_FragCoord.xy);
+    float angle = noise * 6.2831853;
+    float jitter = fract(noise * 7.31);
+    float dr = maxR / float(count);
+    float total = 0.25 * dr * dr; // the centre tap stands for a disc of radius dr/2 (pi cancels)
+    vec3 sum = color * total;
+    for (int i = 0; i < count; i++) {
+        float radius = (float(i) + jitter) * dr;
         vec2 uv = texCoord + vec2(cos(angle), sin(angle)) * texel * radius;
+        angle += GOLDEN_ANGLE;
         vec3 sampleColor = texture(InSampler, uv).rgb;
         float sampleZ = distanceAt(uv);
         float sampleR = blurRadius(sampleZ);
@@ -75,12 +84,12 @@ void main() {
         if (sampleZ > centerZ) {
             sampleR = clamp(sampleR, 0.0, centerR * 2.0);
         }
-        float weight = smoothstep(radius - 0.5, radius + 0.5, sampleR);
-        color += mix(color / total, sampleColor, weight);
-        total += 1.0;
-        radius += step / radius;
-        angle += GOLDEN_ANGLE;
+        float hit = smoothstep(radius - 0.5, radius + 0.5, sampleR);
+        float area = 2.0 * radius * dr;
+        // A tap whose blur doesn't reach this pixel stands in with the average so far.
+        sum += area * mix(sum / total, sampleColor, hit);
+        total += area;
     }
 
-    fragColor = vec4(color / total, 1.0);
+    fragColor = vec4(sum / total, 1.0);
 }

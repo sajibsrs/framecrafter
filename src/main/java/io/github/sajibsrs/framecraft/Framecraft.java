@@ -10,17 +10,22 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class FrameCraft implements ClientModInitializer {
+public final class Framecraft implements ClientModInitializer {
 	public static final String MOD_ID = "framecraft";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	private static KeyMapping toggleKey;
+	private static KeyMapping settingsKey;
 
 	@Override
 	public void onInitializeClient() {
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, MOD_ID));
 		toggleKey = KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.framecraft.toggle", InputConstants.KEY_V, category));
+		settingsKey = KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.framecraft.menu", InputConstants.KEY_X, category));
+
+		FramecraftConfig.load();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(SceneDepth::register);
 
@@ -28,6 +33,12 @@ public final class FrameCraft implements ClientModInitializer {
 			while (toggleKey.consumeClick()) {
 				if (mc.player != null) {
 					CameraState.toggle();
+				}
+			}
+			while (settingsKey.consumeClick()) {
+				// The camera menu belongs to camera mode; elsewhere X keeps its vanilla meaning.
+				if (CameraState.isActive() && mc.gui.screen() == null) {
+					mc.gui.setScreen(new FramecraftSettingsScreen());
 				}
 			}
 		});

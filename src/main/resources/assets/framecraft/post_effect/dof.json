@@ -14,21 +14,24 @@
             "uniforms": {
                 "DofConfig": [
                     { "name": "Lens", "type": "vec4", "value": [ 5.0, 0.0, 0.05, 45000.0 ] },
-                    { "name": "DepthParams", "type": "vec4", "value": [ 0.0, 0.05, 16.0, 1.0 ] },
+                    { "name": "DepthParams", "type": "vec4", "value": [ 0.0, 0.05, 16.0, 32.0 ] },
                     { "name": "Extra", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 0.0 ] }
                 ]
             }
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "minecraft:post/blit",
+            "fragment_shader": "framecraft:post/grade",
             "inputs": [
-                { "sampler_name": "In", "target": "swap" }
+                { "sampler_name": "In", "target": "swap", "bilinear": true }
             ],
             "output": "minecraft:main",
             "uniforms": {
-                "BlitConfig": [
-                    { "name": "ColorModulate", "type": "vec4", "value": [ 1.0, 1.0, 1.0, 1.0 ] }
+                "GradeConfig": [
+                    { "name": "Tone", "type": "vec4", "value": [ 1.0, 0.0, 1.0, 1.0 ] },
+                    { "name": "Balance", "type": "vec4", "value": [ 1.0, 1.0, 1.0, 0.0 ] },
+                    { "name": "Lens", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 1.0 ] },
+                    { "name": "Misc", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 0.0 ] }
                 ]
             }
         }
