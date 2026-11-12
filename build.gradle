@@ -73,7 +73,7 @@ if (project.hasProperty('withIris')) {
 // Release publishing. Tokens come from the environment, never from files:
 //   MODRINTH_TOKEN=... CURSEFORGE_TOKEN=... ./gradlew modrinth publishCurseForge --no-configuration-cache
 // Project IDs live in gradle.properties (modrinth_project_id, curseforge_project_id).
-def releaseChangelog = providers.gradleProperty('release_changelog').getOrElse("Framecrafter ${project.version}. See https://github.com/sajibsrs/framecraft/releases/tag/v${project.version}")
+def releaseChangelog = providers.gradleProperty('release_changelog').getOrElse("Framecrafter ${project.version}. See https://github.com/sajibsrs/framecrafter/releases/tag/v${project.version}")
 
 modrinth {
 	token = providers.environmentVariable('MODRINTH_TOKEN')

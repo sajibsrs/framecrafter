@@ -27,7 +27,7 @@ Straight out of the camera, no edits.
 
 ## Installing
 
-Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newer, [Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download `framecrafter-<version>.jar` from the [releases page](https://github.com/sajibsrs/framecraft/releases) and put it and Fabric API in your `mods` folder. Framecrafter is client-only, so it works on any server.
+Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newer, [Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download Framecrafter from [Modrinth](https://modrinth.com/mod/framecrafter), [CurseForge](https://www.curseforge.com/minecraft/mc-mods/framecrafter) or the [releases page](https://github.com/sajibsrs/framecrafter/releases), and put the jar and Fabric API in your `mods` folder. Launchers such as Prism, the Modrinth App and the CurseForge app can install it, and Fabric API with it, straight from those sites. Framecrafter is client-only, so it works on any server.
 
 ## Controls
 
