@@ -11,6 +11,16 @@ A camera for Minecraft (Fabric, 26.3). Press `V` to look through a full-frame ca
 - **Exposure and colour**: ISO for brightness, film grain, white balance, tint and picture styles, plus lens vignetting and distortion.
 - **Shutter** saves a clean `framecraft_*.png` to `screenshots/`, without the viewfinder.
 
+## Gallery
+
+Straight out of the camera, no edits.
+
+| | |
+|---|---|
+| ![Villager by a terracotta house, background softly blurred](docs/screenshots/villager.jpg) | ![Pillager aiming a crossbow, trees and water melting into bokeh](docs/screenshots/pillager.jpg) |
+| ![Spotted horse on grassy terraces, other horses out of focus](docs/screenshots/horse.jpg) | ![Wide savanna landscape with acacias and a stone outcrop](docs/screenshots/savanna.jpg) |
+| ![Close-up of a pumpkin with a row of pumpkins falling out of focus](docs/screenshots/pumpkins.jpg) | ![Chicken on a grass ledge in a savanna at golden hour](docs/screenshots/chicken.jpg) |
+
 ## Installing
 
 Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newer, [Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download `framecraft-<version>.jar` from the [releases page](https://github.com/sajibsrs/framecraft/releases) and put it and Fabric API in your `mods` folder. Framecraft is client-only, so it works on any server.
