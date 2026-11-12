@@ -8,10 +8,10 @@
     "passes": [
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "framecraft:post/highlight",
+            "fragment_shader": "framecrafter:post/highlight",
             "inputs": [
                 { "sampler_name": "In", "target": "minecraft:main" },
-                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+                { "sampler_name": "Depth", "location": "framecrafter:scene_depth", "width": 1, "height": 1 }
             ],
             "output": "glow_h",
             "uniforms": {
@@ -27,10 +27,10 @@
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "framecraft:post/highlight",
+            "fragment_shader": "framecrafter:post/highlight",
             "inputs": [
                 { "sampler_name": "In", "target": "glow_h" },
-                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+                { "sampler_name": "Depth", "location": "framecrafter:scene_depth", "width": 1, "height": 1 }
             ],
             "output": "glow",
             "uniforms": {
@@ -46,10 +46,10 @@
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "framecraft:post/dof",
+            "fragment_shader": "framecrafter:post/dof",
             "inputs": [
                 { "sampler_name": "In", "target": "minecraft:main", "bilinear": true },
-                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 },
+                { "sampler_name": "Depth", "location": "framecrafter:scene_depth", "width": 1, "height": 1 },
                 { "sampler_name": "Glow", "target": "glow", "bilinear": true }
             ],
             "output": "swap",
@@ -63,10 +63,10 @@
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "framecraft:post/dof_smooth",
+            "fragment_shader": "framecrafter:post/dof_smooth",
             "inputs": [
                 { "sampler_name": "In", "target": "swap", "bilinear": true },
-                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+                { "sampler_name": "Depth", "location": "framecrafter:scene_depth", "width": 1, "height": 1 }
             ],
             "output": "smooth",
             "uniforms": {
@@ -79,7 +79,7 @@
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
-            "fragment_shader": "framecraft:post/grade",
+            "fragment_shader": "framecrafter:post/grade",
             "inputs": [
                 { "sampler_name": "In", "target": "smooth", "bilinear": true }
             ],

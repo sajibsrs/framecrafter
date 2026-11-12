@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
@@ -10,8 +10,8 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class Framecraft implements ClientModInitializer {
-	public static final String MOD_ID = "framecraft";
+public final class Framecrafter implements ClientModInitializer {
+	public static final String MOD_ID = "framecrafter";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	private static KeyMapping toggleKey;
@@ -21,11 +21,11 @@ public final class Framecraft implements ClientModInitializer {
 	public void onInitializeClient() {
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, MOD_ID));
 		toggleKey = KeyMappingHelper.registerKeyMapping(
-			new KeyMapping("key.framecraft.toggle", InputConstants.KEY_V, category));
+			new KeyMapping("key.framecrafter.toggle", InputConstants.KEY_V, category));
 		settingsKey = KeyMappingHelper.registerKeyMapping(
-			new KeyMapping("key.framecraft.menu", InputConstants.KEY_X, category));
+			new KeyMapping("key.framecrafter.menu", InputConstants.KEY_X, category));
 
-		FramecraftConfig.load();
+		FramecrafterConfig.load();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(SceneDepth::register);
 
@@ -38,7 +38,7 @@ public final class Framecraft implements ClientModInitializer {
 			while (settingsKey.consumeClick()) {
 				// The camera menu belongs to camera mode; elsewhere X keeps its vanilla meaning.
 				if (CameraState.isActive() && mc.gui.screen() == null) {
-					mc.gui.setScreen(new FramecraftSettingsScreen());
+					mc.gui.setScreen(new FramecrafterSettingsScreen());
 				}
 			}
 		});

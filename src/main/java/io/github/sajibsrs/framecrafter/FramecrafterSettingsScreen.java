@@ -1,8 +1,8 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
-import io.github.sajibsrs.framecraft.FramecraftConfig.Bokeh;
-import io.github.sajibsrs.framecraft.FramecraftConfig.PictureStyle;
-import io.github.sajibsrs.framecraft.FramecraftConfig.WhiteBalance;
+import io.github.sajibsrs.framecrafter.FramecrafterConfig.Bokeh;
+import io.github.sajibsrs.framecrafter.FramecrafterConfig.PictureStyle;
+import io.github.sajibsrs.framecrafter.FramecrafterConfig.WhiteBalance;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -22,7 +22,7 @@ import net.minecraft.network.chat.Component;
  * The camera menu, opened with X in camera mode. Widgets sit in a column on the right and the
  * world is not blurred behind them, so every change shows in the live view straight away.
  */
-public final class FramecraftSettingsScreen extends Screen {
+public final class FramecrafterSettingsScreen extends Screen {
 	private static final int COL_W = 124;
 	private static final int ROW_H = 20;
 	private static final int GAP = 4;
@@ -35,8 +35,8 @@ public final class FramecraftSettingsScreen extends Screen {
 	private CycleButton<WhiteBalance> wbButton;
 	private StepSlider kelvinSlider;
 
-	public FramecraftSettingsScreen() {
-		super(Component.translatable("framecraft.settings.title"));
+	public FramecrafterSettingsScreen() {
+		super(Component.translatable("framecrafter.settings.title"));
 	}
 
 	@Override
@@ -44,42 +44,42 @@ public final class FramecraftSettingsScreen extends Screen {
 		List<AbstractWidget> w = new ArrayList<>();
 
 		// Exposure and colour
-		double[] isos = new double[FramecraftConfig.ISO_STOPS.length];
+		double[] isos = new double[FramecrafterConfig.ISO_STOPS.length];
 		for (int i = 0; i < isos.length; i++) {
-			isos[i] = FramecraftConfig.ISO_STOPS[i];
+			isos[i] = FramecrafterConfig.ISO_STOPS[i];
 		}
-		w.add(new StepSlider(isos, FramecraftConfig.iso(),
-			v -> "ISO: " + (int) v, v -> FramecraftConfig.isoIndex = indexOf(FramecraftConfig.ISO_STOPS, (int) v)));
-		w.add(new StepSlider(steps(0, FramecraftConfig.MAX_GRAIN, 1), FramecraftConfig.grain,
-			v -> v == 0 ? "Grain: Off" : "Grain: " + (int) v, v -> FramecraftConfig.grain = (int) v));
-		wbButton = CycleButton.<WhiteBalance>builder(wb -> Component.literal(wb.label), FramecraftConfig.whiteBalance)
+		w.add(new StepSlider(isos, FramecrafterConfig.iso(),
+			v -> "ISO: " + (int) v, v -> FramecrafterConfig.isoIndex = indexOf(FramecrafterConfig.ISO_STOPS, (int) v)));
+		w.add(new StepSlider(steps(0, FramecrafterConfig.MAX_GRAIN, 1), FramecrafterConfig.grain,
+			v -> v == 0 ? "Grain: Off" : "Grain: " + (int) v, v -> FramecrafterConfig.grain = (int) v));
+		wbButton = CycleButton.<WhiteBalance>builder(wb -> Component.literal(wb.label), FramecrafterConfig.whiteBalance)
 			.withValues(WhiteBalance.values())
-			.create(Component.translatable("framecraft.settings.whiteBalance"), (b, v) -> {
-				FramecraftConfig.whiteBalance = v;
+			.create(Component.translatable("framecrafter.settings.whiteBalance"), (b, v) -> {
+				FramecrafterConfig.whiteBalance = v;
 				kelvinSlider.active = v == WhiteBalance.CUSTOM;
 			});
 		w.add(wbButton);
-		kelvinSlider = new StepSlider(steps(FramecraftConfig.MIN_KELVIN, FramecraftConfig.MAX_KELVIN, 100), FramecraftConfig.customKelvin,
-			v -> "Kelvin: " + (int) v + "K", v -> FramecraftConfig.customKelvin = (int) v);
-		kelvinSlider.active = FramecraftConfig.whiteBalance == WhiteBalance.CUSTOM;
+		kelvinSlider = new StepSlider(steps(FramecrafterConfig.MIN_KELVIN, FramecrafterConfig.MAX_KELVIN, 100), FramecrafterConfig.customKelvin,
+			v -> "Kelvin: " + (int) v + "K", v -> FramecrafterConfig.customKelvin = (int) v);
+		kelvinSlider.active = FramecrafterConfig.whiteBalance == WhiteBalance.CUSTOM;
 		w.add(kelvinSlider);
-		w.add(new StepSlider(steps(-FramecraftConfig.MAX_TINT, FramecraftConfig.MAX_TINT, 1), FramecraftConfig.tint,
-			v -> String.format(Locale.ROOT, "Tint: %+d %s", (int) v, v > 0 ? "M" : v < 0 ? "G" : ""), v -> FramecraftConfig.tint = (int) v));
-		w.add(CycleButton.<PictureStyle>builder(s -> Component.literal(s.label), FramecraftConfig.pictureStyle)
+		w.add(new StepSlider(steps(-FramecrafterConfig.MAX_TINT, FramecrafterConfig.MAX_TINT, 1), FramecrafterConfig.tint,
+			v -> String.format(Locale.ROOT, "Tint: %+d %s", (int) v, v > 0 ? "M" : v < 0 ? "G" : ""), v -> FramecrafterConfig.tint = (int) v));
+		w.add(CycleButton.<PictureStyle>builder(s -> Component.literal(s.label), FramecrafterConfig.pictureStyle)
 			.withValues(PictureStyle.values())
-			.create(Component.translatable("framecraft.settings.pictureStyle"), (b, v) -> FramecraftConfig.pictureStyle = v));
+			.create(Component.translatable("framecrafter.settings.pictureStyle"), (b, v) -> FramecrafterConfig.pictureStyle = v));
 
 		// Lens
-		w.add(toggle("vignetting", FramecraftConfig.vignetting, v -> FramecraftConfig.vignetting = v));
-		w.add(toggle("distortion", FramecraftConfig.distortion, v -> FramecraftConfig.distortion = v));
-		w.add(CycleButton.<Bokeh>builder(s -> Component.literal(s.label), FramecraftConfig.bokeh)
+		w.add(toggle("vignetting", FramecrafterConfig.vignetting, v -> FramecrafterConfig.vignetting = v));
+		w.add(toggle("distortion", FramecrafterConfig.distortion, v -> FramecrafterConfig.distortion = v));
+		w.add(CycleButton.<Bokeh>builder(s -> Component.literal(s.label), FramecrafterConfig.bokeh)
 			.withValues(Bokeh.values())
-			.create(Component.translatable("framecraft.settings.bokeh"), (b, v) -> FramecraftConfig.bokeh = v));
+			.create(Component.translatable("framecrafter.settings.bokeh"), (b, v) -> FramecrafterConfig.bokeh = v));
 
 		// Viewfinder
-		w.add(toggle("showCameraInfo", FramecraftConfig.showCameraInfo, v -> FramecraftConfig.showCameraInfo = v));
-		w.add(toggle("showGrid", FramecraftConfig.showGrid, v -> FramecraftConfig.showGrid = v));
-		w.add(toggle("showHints", FramecraftConfig.showHints, v -> FramecraftConfig.showHints = v));
+		w.add(toggle("showCameraInfo", FramecrafterConfig.showCameraInfo, v -> FramecrafterConfig.showCameraInfo = v));
+		w.add(toggle("showGrid", FramecrafterConfig.showGrid, v -> FramecrafterConfig.showGrid = v));
+		w.add(toggle("showHints", FramecrafterConfig.showHints, v -> FramecrafterConfig.showHints = v));
 		w.add(Button.builder(CommonComponents.GUI_DONE, b -> this.onClose()).build());
 
 		int rows = (w.size() + 1) / 2;
@@ -115,12 +115,12 @@ public final class FramecraftSettingsScreen extends Screen {
 
 	@Override
 	public void removed() {
-		FramecraftConfig.save();
+		FramecrafterConfig.save();
 	}
 
 	private static CycleButton<Boolean> toggle(String key, boolean value, Consumer<Boolean> setter) {
 		return CycleButton.onOffBuilder(value)
-			.create(Component.translatable("framecraft.settings." + key), (b, v) -> setter.accept(v));
+			.create(Component.translatable("framecrafter.settings." + key), (b, v) -> setter.accept(v));
 	}
 
 	private static double[] steps(double min, double max, double step) {

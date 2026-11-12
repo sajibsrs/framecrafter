@@ -1,4 +1,4 @@
-# Framecraft
+# Framecrafter
 
 A camera for Minecraft (Fabric, 26.3). Press `V` to look through a full-frame camera with a zoom lens, real depth of field, autofocus and a shutter. Works with or without an Iris shader pack.
 
@@ -9,7 +9,7 @@ A camera for Minecraft (Fabric, 26.3). Press `V` to look through a full-frame ca
 - **Back-button autofocus**: hold right mouse to focus on whatever is under the focus box. Release and focus stays put.
 - **Movable focus point**: hold Ctrl and move the mouse.
 - **Exposure and colour**: ISO for brightness, film grain, white balance, tint and picture styles, plus lens vignetting and distortion.
-- **Shutter** saves a clean `framecraft_*.png` to `screenshots/`, without the viewfinder.
+- **Shutter** saves a clean `framecrafter_*.png` to `screenshots/`, without the viewfinder.
 
 ![Camera menu over the viewfinder: ISO, grain, white balance, Kelvin, tint, picture style, vignetting, distortion, bokeh, camera info, thirds grid and hints](docs/screenshots/camera-menu.jpg)
 
@@ -27,7 +27,7 @@ Straight out of the camera, no edits.
 
 ## Installing
 
-Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newer, [Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download `framecraft-<version>.jar` from the [releases page](https://github.com/sajibsrs/framecraft/releases) and put it and Fabric API in your `mods` folder. Framecraft is client-only, so it works on any server.
+Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newer, [Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download `framecrafter-<version>.jar` from the [releases page](https://github.com/sajibsrs/framecraft/releases) and put it and Fabric API in your `mods` folder. Framecrafter is client-only, so it works on any server.
 
 ## Controls
 
@@ -42,7 +42,7 @@ Requires Minecraft 26.3, [Fabric Loader](https://fabricmc.net/use/) 0.20 or newe
 | `X` | Camera menu |
 | `F1` | Hide the viewfinder for a clean live view |
 
-The keys apply only in camera mode; elsewhere `X`, the mouse and scroll keep their normal use. While in camera mode you can't break blocks or use items, and the HUD and your hand are hidden. `V` and `X` can be rebound under Options → Controls → Key Binds → Framecraft.
+The keys apply only in camera mode; elsewhere `X`, the mouse and scroll keep their normal use. While in camera mode you can't break blocks or use items, and the HUD and your hand are hidden. `V` and `X` can be rebound under Options → Controls → Key Binds → Framecrafter.
 
 Each time you enter camera mode the lens is at 50 mm, f/2.8, focused at 5 m, with the focus point in the centre.
 
@@ -76,7 +76,7 @@ White balance works like a camera's: the light in Minecraft counts as daylight, 
 
 ## Taking photos
 
-- Photos go to `.minecraft/screenshots/` as `framecraft_<date>_<time>.png`, at your window's resolution.
+- Photos go to `.minecraft/screenshots/` as `framecrafter_<date>_<time>.png`, at your window's resolution.
 - The viewfinder marks are never in the photo. With **Camera Info** on, the photo carries the info panel in the bottom-left corner.
 - **For strong background blur**: zoom in, open the aperture (f/1.2–f/2.8) and get close to the subject. Depth of field gets shallower the closer you focus, so 85 mm at f/1.2 on a mob a few blocks away melts the background, while the same lens on a mob 30 blocks away keeps much of the scene sharp.
 - **For bokeh**: put small bright lights (torches, lanterns, glowstone, sunlit glints) far behind a close subject and open up to f/1.2–f/2. Each light turns into the Bokeh shape from the menu. Shapes show best on lights much smaller than their blur, and at night, when the lights are the brightest thing in frame. Only out-of-focus lights turn into shapes; a subject in focus and the sky (for example through leaves) blur normally.
@@ -85,11 +85,11 @@ White balance works like a camera's: the light in Minecraft counts as daylight, 
 
 ## Shader packs
 
-Works with Iris shader packs: depth of field and colour are applied on top of the pack's image. Shader packs that have their own depth of field will add to Framecraft's blur, so turn theirs off.
+Works with Iris shader packs: depth of field and colour are applied on top of the pack's image. Shader packs that have their own depth of field will add to Framecrafter's blur, so turn theirs off.
 
 ## Settings file
 
-Everything in the camera menu is stored in `config/framecraft.properties`. Delete the file to go back to the defaults.
+Everything in the camera menu is stored in `config/framecrafter.properties`. Delete the file to go back to the defaults.
 
 ## Building
 
@@ -99,7 +99,7 @@ Everything in the camera menu is stored in `config/framecraft.properties`. Delet
 ./gradlew runClientGameTest -PwithIris   # same, with Iris + Sodium from the local Prism instance and a shader pack
 ```
 
-`-PshaderPack=<dir>` picks the pack for `-PwithIris`. Run the game with `-Dframecraft.debugDepth=true` to see the depth buffer the blur is built from.
+`-PshaderPack=<dir>` picks the pack for `-PwithIris`. Run the game with `-Dframecrafter.debugDepth=true` to see the depth buffer the blur is built from.
 
 ## License
 

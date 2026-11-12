@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -12,10 +12,10 @@ import net.minecraft.resources.Identifier;
  * A copy of the world's depth, taken the moment the level finishes drawing.
  * Shader packs (and the 3D HUD) may reuse or clear the main depth buffer afterwards,
  * so the DOF pass reads this snapshot instead. Registered as a texture so the post
- * chain can sample it by name ("framecraft:scene_depth").
+ * chain can sample it by name ("framecrafter:scene_depth").
  */
 public final class SceneDepth extends AbstractTexture {
-	public static final Identifier ID = Identifier.fromNamespaceAndPath(Framecraft.MOD_ID, "textures/effect/scene_depth.png");
+	public static final Identifier ID = Identifier.fromNamespaceAndPath(Framecrafter.MOD_ID, "textures/effect/scene_depth.png");
 	private static final SceneDepth INSTANCE = new SceneDepth();
 	private static boolean registered;
 
@@ -52,7 +52,7 @@ public final class SceneDepth extends AbstractTexture {
 		this.releaseTextures();
 		GpuDevice device = RenderSystem.getDevice();
 		this.texture = device.createTexture(
-			"framecraft scene depth",
+			"framecrafter scene depth",
 			GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
 			source.getFormat(), source.getWidth(0), source.getHeight(0), 1, 1);
 		this.textureView = device.createTextureView(this.texture);

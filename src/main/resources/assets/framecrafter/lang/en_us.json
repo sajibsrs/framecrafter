@@ -1,0 +1,14 @@
+{
+	"key.category.framecrafter.framecrafter": "Framecrafter",
+	"key.framecrafter.toggle": "Camera mode",
+	"key.framecrafter.menu": "Camera menu",
+	"framecrafter.settings.title": "Camera Menu",
+	"framecrafter.settings.whiteBalance": "WB",
+	"framecrafter.settings.pictureStyle": "Style",
+	"framecrafter.settings.vignetting": "Vignetting",
+	"framecrafter.settings.distortion": "Distortion",
+	"framecrafter.settings.bokeh": "Bokeh",
+	"framecrafter.settings.showCameraInfo": "Camera Info",
+	"framecrafter.settings.showGrid": "Thirds Grid",
+	"framecrafter.settings.showHints": "Hints"
+}

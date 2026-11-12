@@ -1,10 +1,10 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import io.github.sajibsrs.framecraft.mixin.PostChainAccessor;
-import io.github.sajibsrs.framecraft.mixin.PostPassAccessor;
+import io.github.sajibsrs.framecrafter.mixin.PostChainAccessor;
+import io.github.sajibsrs.framecrafter.mixin.PostPassAccessor;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
@@ -16,14 +16,14 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 /**
- * Drives the framecraft:dof post chain: two highlight-spread passes that feed the bokeh, the
+ * Drives the framecrafter:dof post chain: two highlight-spread passes that feed the bokeh, the
  * depth-of-field pass, a smoothing pass that removes the gather's grain, then the grade pass (lens
  * distortion, vignetting, exposure, white balance, picture style, grain). Vanilla
  * post-effect uniforms are fixed at load time, so each pass's config buffer is swapped for a
  * writable one and refreshed every frame.
  */
 public final class DofEffect {
-	public static final Identifier ID = Identifier.fromNamespaceAndPath("framecraft", "dof");
+	public static final Identifier ID = Identifier.fromNamespaceAndPath("framecrafter", "dof");
 	private static final String BLOCK = "DofConfig";
 	private static final int BLOCK_SIZE = 3 * 16; // three vec4
 	private static final String GRADE_BLOCK = "GradeConfig";
@@ -91,29 +91,29 @@ public final class DofEffect {
 		float sampleCount = sampleCount(height, CameraState.isCapturing());
 		lastMaxRadiusPx = maxRadius;
 		lastSampleCount = sampleCount;
-		boolean debugDepth = Boolean.getBoolean("framecraft.debugDepth");
+		boolean debugDepth = Boolean.getBoolean("framecrafter.debugDepth");
 		frame = (frame + 1) & 0xFFFF;
 
-		for (PostPass pass : ((PostChainAccessor) chain).framecraft$passes()) {
+		for (PostPass pass : ((PostChainAccessor) chain).framecrafter$passes()) {
 			GpuBuffer dof = writable(pass, BLOCK, BLOCK_SIZE);
 			if (dof != null) {
 				try (MemoryStack stack = MemoryStack.stackPush()) {
 					Std140Builder builder = Std140Builder.onStack(stack, BLOCK_SIZE);
 					builder.putVec4((float) focusM, apertureDiameter, focal, pxPerSensorMeter);
 					builder.putVec4(a, bMeters, maxRadius, sampleCount);
-					builder.putVec4(skyDepth, debugDepth ? 1f : 0f, FramecraftConfig.bokeh.blades, 0f);
+					builder.putVec4(skyDepth, debugDepth ? 1f : 0f, FramecrafterConfig.bokeh.blades, 0f);
 					RenderSystem.getDevice().createCommandEncoder().writeToBuffer(dof.slice(), builder.get());
 				}
 			}
 			GpuBuffer grade = writable(pass, GRADE_BLOCK, GRADE_BLOCK_SIZE);
 			if (grade != null) {
 				int width = mc.gameRenderer.mainRenderTarget().width;
-				float[] wb = whiteBalanceGain(FramecraftConfig.kelvin(), FramecraftConfig.effectiveTint());
-				FramecraftConfig.PictureStyle style = FramecraftConfig.pictureStyle;
-				float grain = 0.01f * FramecraftConfig.grain;
+				float[] wb = whiteBalanceGain(FramecrafterConfig.kelvin(), FramecrafterConfig.effectiveTint());
+				FramecrafterConfig.PictureStyle style = FramecrafterConfig.pictureStyle;
+				float grain = 0.01f * FramecrafterConfig.grain;
 				try (MemoryStack stack = MemoryStack.stackPush()) {
 					Std140Builder builder = Std140Builder.onStack(stack, GRADE_BLOCK_SIZE);
-					builder.putVec4((float) Math.pow(2.0, FramecraftConfig.exposureEv()), grain, style.contrast, style.saturation);
+					builder.putVec4((float) Math.pow(2.0, FramecrafterConfig.exposureEv()), grain, style.contrast, style.saturation);
 					builder.putVec4(wb[0], wb[1], wb[2], 0f);
 					builder.putVec4(CameraState.distortionK(), CameraState.vignetteEv(), frame, (float) width / Math.max(1, height));
 					builder.putVec4(debugDepth ? 1f : 0f, 0f, 0f, 0f);
@@ -125,14 +125,14 @@ public final class DofEffect {
 
 	/** The pass's writable copy of {@code block}, made on first use; null if the pass has no such block. */
 	private static GpuBuffer writable(PostPass pass, String block, int size) {
-		Map<String, GpuBuffer> uniforms = ((PostPassAccessor) pass).framecraft$customUniforms();
+		Map<String, GpuBuffer> uniforms = ((PostPassAccessor) pass).framecrafter$customUniforms();
 		if (!uniforms.containsKey(block)) {
 			return null;
 		}
 		return OWNED.computeIfAbsent(pass, p -> {
 			GpuBuffer original = uniforms.get(block);
 			GpuBuffer copy = RenderSystem.getDevice()
-				.createBuffer(() -> "framecraft " + block, GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, size);
+				.createBuffer(() -> "framecrafter " + block, GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, size);
 			uniforms.put(block, copy);
 			original.close();
 			return copy;

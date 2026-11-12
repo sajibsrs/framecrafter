@@ -1,9 +1,11 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'com.modrinth.minotaur' version '2.10.0'
+	id 'net.darkhax.curseforgegradle' version '1.3.33'
 }
 
 base {
-	archivesName = 'framecraft'
+	archivesName = 'framecrafter'
 }
 
 dependencies {
@@ -23,7 +25,7 @@ processResources {
 // The MIT licence requires its text to travel with the jar.
 jar {
 	from('LICENSE') {
-		rename { "LICENSE_framecraft" }
+		rename { "LICENSE_framecrafter" }
 	}
 }
 
@@ -40,7 +42,7 @@ java {
 fabricApi {
 	configureTests {
 		createSourceSet = true
-		modId = "framecraft-gametest"
+		modId = "framecrafter-gametest"
 		enableGameTests = false
 		enableClientGameTests = true
 		eula = true
@@ -65,5 +67,46 @@ if (project.hasProperty('withIris')) {
 			file("${run}/config").mkdirs()
 			file("${run}/config/iris.properties").text = "enableShaders=true\nshaderPack=TestPack\ndisableUpdateMessage=true\n"
 		}
+	}
+}
+
+// Release publishing. Tokens come from the environment, never from files:
+//   MODRINTH_TOKEN=... CURSEFORGE_TOKEN=... ./gradlew modrinth publishCurseForge --no-configuration-cache
+// Project IDs live in gradle.properties (modrinth_project_id, curseforge_project_id).
+def releaseChangelog = providers.gradleProperty('release_changelog').getOrElse("Framecrafter ${project.version}. See https://github.com/sajibsrs/framecraft/releases/tag/v${project.version}")
+
+modrinth {
+	token = providers.environmentVariable('MODRINTH_TOKEN')
+	projectId = providers.gradleProperty('modrinth_project_id')
+	versionNumber = project.version.toString()
+	versionName = "Framecrafter ${project.version}"
+	versionType = 'release'
+	uploadFile = tasks.named('jar')
+	gameVersions = [project.minecraft_version]
+	loaders = ['fabric']
+	changelog = releaseChangelog
+	dependencies {
+		required.project 'fabric-api'
+	}
+}
+
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+	notCompatibleWithConfigurationCache('CurseForgeGradle resolves files at execution time')
+	dependsOn tasks.named('jar')
+	def jarFile = tasks.named('jar').flatMap { it.archiveFile }
+	doFirst {
+		def projectId = providers.gradleProperty('curseforge_project_id').getOrNull()
+		def token = providers.environmentVariable('CURSEFORGE_TOKEN').getOrNull()
+		if (!projectId) throw new GradleException('Set curseforge_project_id in gradle.properties')
+		if (!token) throw new GradleException('Set the CURSEFORGE_TOKEN environment variable')
+		apiToken = token
+		def mainFile = upload(projectId, jarFile.get())
+		mainFile.displayName = "Framecrafter ${project.version}"
+		mainFile.releaseType = 'release'
+		mainFile.changelog = releaseChangelog
+		mainFile.addGameVersion(project.minecraft_version)
+		mainFile.addModLoader('Fabric')
+		mainFile.addEnvironment('Client')
+		mainFile.addRequirement('fabric-api')
 	}
 }

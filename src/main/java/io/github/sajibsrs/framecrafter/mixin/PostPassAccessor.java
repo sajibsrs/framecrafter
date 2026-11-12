@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft.mixin;
+package io.github.sajibsrs.framecrafter.mixin;
 
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import java.util.Map;
@@ -9,5 +9,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(PostPass.class)
 public interface PostPassAccessor {
 	@Accessor("customUniforms")
-	Map<String, GpuBuffer> framecraft$customUniforms();
+	Map<String, GpuBuffer> framecrafter$customUniforms();
 }

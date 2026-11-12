@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public final class Viewfinder {
 			return;
 		}
 
-		if (FramecraftConfig.showGrid) {
+		if (FramecrafterConfig.showGrid) {
 			// Rule-of-thirds grid.
 			for (int i = 1; i <= 2; i++) {
 				int x = w * i / 3;
@@ -61,11 +61,11 @@ public final class Viewfinder {
 			formatDistance(CameraState.focusM()));
 		g.fill(0, h - 16, w, h, 0x88000000);
 		g.centeredText(font, readout, cx, h - 12, TEXT);
-		if (FramecraftConfig.showCameraInfo) {
+		if (FramecrafterConfig.showCameraInfo) {
 			drawInfo(mc, g, font, h - 16);
 		}
 		// Control hints, not while the camera menu is open; split over two lines when narrow.
-		if (!FramecraftConfig.showHints || mc.gui.screen() != null) {
+		if (!FramecrafterConfig.showHints || mc.gui.screen() != null) {
 			return;
 		}
 		String lens = "Scroll: zoom   Ctrl+Scroll: aperture   X: menu";
@@ -81,7 +81,7 @@ public final class Viewfinder {
 
 	/** What goes into a photo: only the info panel, and only when Camera Info is on. */
 	public static void drawPhotoInfo(Minecraft mc, GuiGraphicsExtractor g) {
-		if (FramecraftConfig.showCameraInfo) {
+		if (FramecrafterConfig.showCameraInfo) {
 			drawInfo(mc, g, mc.font, g.guiHeight());
 		}
 	}
@@ -116,10 +116,10 @@ public final class Viewfinder {
 		lines.add(String.format(Locale.ROOT, "Bg blur %.1fpx   CoC %.0fµm   %.0f samples   %dx%d",
 			CameraState.blurRadiusPx(1.0e5, s, frameH), CameraState.cocDiameterM(sharp, frameH) * 1.0e6,
 			DofEffect.sampleCount(frameH, CameraState.isCapturing()), frameW, frameH));
-		FramecraftConfig.WhiteBalance wb = FramecraftConfig.whiteBalance;
+		FramecrafterConfig.WhiteBalance wb = FramecrafterConfig.whiteBalance;
 		lines.add(String.format(Locale.ROOT, "ISO %d (%+.1fEV)   grain %d   WB %s %dK tint %+d   %s",
-			FramecraftConfig.iso(), FramecraftConfig.exposureEv(), FramecraftConfig.grain, wb.label, FramecraftConfig.kelvin(),
-			FramecraftConfig.effectiveTint(), FramecraftConfig.pictureStyle.label));
+			FramecrafterConfig.iso(), FramecrafterConfig.exposureEv(), FramecrafterConfig.grain, wb.label, FramecrafterConfig.kelvin(),
+			FramecrafterConfig.effectiveTint(), FramecrafterConfig.pictureStyle.label));
 		lines.add(String.format(Locale.ROOT, "Vignette %.1f stops at corner   %s", CameraState.vignetteEv(),
 			k == 0f ? "rectilinear, no distortion"
 				: String.format(Locale.ROOT, "distortion %s k=%+.1f%%", k > 0 ? "barrel" : "pincushion", k * 100f)));

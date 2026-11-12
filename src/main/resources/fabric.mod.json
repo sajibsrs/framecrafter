@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "framecraft",
+	"id": "framecrafter",
 	"version": "${version}",
-	"name": "Framecraft",
+	"name": "Framecrafter",
 	"description": "A camera for Minecraft: focal length, aperture and real depth of field.",
 	"authors": ["sajibsrs"],
 	"contact": {
@@ -11,12 +11,12 @@
 		"issues": "https://github.com/sajibsrs/framecraft/issues"
 	},
 	"license": "MIT",
-	"icon": "assets/framecraft/icon.png",
+	"icon": "assets/framecrafter/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["io.github.sajibsrs.framecraft.Framecraft"]
+		"client": ["io.github.sajibsrs.framecrafter.Framecrafter"]
 	},
-	"mixins": ["framecraft.mixins.json"],
+	"mixins": ["framecrafter.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.20.0",
 		"minecraft": "~26.3",

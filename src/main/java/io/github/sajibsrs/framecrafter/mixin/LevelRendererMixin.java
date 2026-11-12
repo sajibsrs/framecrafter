@@ -1,7 +1,7 @@
-package io.github.sajibsrs.framecraft.mixin;
+package io.github.sajibsrs.framecrafter.mixin;
 
-import io.github.sajibsrs.framecraft.CameraState;
-import io.github.sajibsrs.framecraft.SceneDepth;
+import io.github.sajibsrs.framecrafter.CameraState;
+import io.github.sajibsrs.framecrafter.SceneDepth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = LevelRenderer.class, priority = 900)
 public class LevelRendererMixin {
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4fStack;popMatrix()Lorg/joml/Matrix4fStack;"))
-	private void framecraft$captureDepth(CallbackInfo ci) {
+	private void framecrafter$captureDepth(CallbackInfo ci) {
 		if (CameraState.isActive()) {
 			SceneDepth.capture(Minecraft.getInstance());
 		}

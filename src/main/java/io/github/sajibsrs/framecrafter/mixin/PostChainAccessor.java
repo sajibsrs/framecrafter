@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft.mixin;
+package io.github.sajibsrs.framecrafter.mixin;
 
 import java.util.List;
 import net.minecraft.client.renderer.PostChain;
@@ -9,5 +9,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(PostChain.class)
 public interface PostChainAccessor {
 	@Accessor("passes")
-	List<PostPass> framecraft$passes();
+	List<PostPass> framecrafter$passes();
 }

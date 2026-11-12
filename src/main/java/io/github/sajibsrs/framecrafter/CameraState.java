@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -163,7 +163,7 @@ public final class CameraState {
 	 * zooms show uncorrected: strong barrel at 14 mm, none near 50 mm, mild pincushion at 200 mm.
 	 */
 	public static float distortionK() {
-		if (!FramecraftConfig.distortion) {
+		if (!FramecrafterConfig.distortion) {
 			return 0f;
 		}
 		double f = shownFocalMm;
@@ -178,7 +178,7 @@ public final class CameraState {
 	 * gone about three stops down; natural (cos^4) falloff grows on wide lenses.
 	 */
 	public static float vignetteEv() {
-		if (!FramecraftConfig.vignetting) {
+		if (!FramecrafterConfig.vignetting) {
 			return 0f;
 		}
 		double stopsDown = 2.0 * Math.log(fNumber() / F_STOPS[0]) / Math.log(2.0);
@@ -267,7 +267,7 @@ public final class CameraState {
 		// Back-button AF: focus only moves while "use" (right mouse) is held.
 		// Let go and it stays where it is, as with AF-ON on a real camera.
 		boolean afHeld = mc.options.keyUse.isDown() && mc.gui.screen() == null;
-		if (afHeld || FramecraftConfig.showCameraInfo) {
+		if (afHeld || FramecrafterConfig.showCameraInfo) {
 			subjectBlocks = subjectDepth(mc);
 		}
 		if (afHeld) {

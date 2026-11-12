@@ -1,9 +1,9 @@
-package io.github.sajibsrs.framecraft.test;
+package io.github.sajibsrs.framecrafter.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import io.github.sajibsrs.framecraft.CameraState;
-import io.github.sajibsrs.framecraft.CameraState.AfState;
-import io.github.sajibsrs.framecraft.FramecraftConfig;
+import io.github.sajibsrs.framecrafter.CameraState;
+import io.github.sajibsrs.framecrafter.CameraState.AfState;
+import io.github.sajibsrs.framecrafter.FramecrafterConfig;
 import java.io.File;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -14,7 +14,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
  * input: back-button AF (right mouse), Ctrl + mouse to move the focus point, and the shutter.
  * Screenshots go to build/run/clientGameTest/screenshots.
  */
-public class FramecraftClientTest implements FabricClientGameTest {
+public class FramecrafterClientTest implements FabricClientGameTest {
 	@Override
 	public void runTest(ClientGameTestContext ctx) {
 		try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
@@ -28,7 +28,7 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			sp.getServer().runCommand("fill -8 -60 50 8 -52 50 minecraft:oak_planks");
 			sp.getServer().runCommand("tp @p 0.5 -60 -1.5 0 8");
 			ctx.waitTicks(60);
-			ctx.takeScreenshot("framecraft-0-off");
+			ctx.takeScreenshot("framecrafter-0-off");
 
 			ctx.runOnClient(mc -> {
 				resetSettings();
@@ -49,15 +49,15 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.waitTicks(30);
 			expect(ctx, AfState.SHARP, "focusing the gold pillar");
 			expectFocus(ctx, 4.0, 5.0, "gold pillar");
-			ctx.takeScreenshot("framecraft-1-near-f1.2");
-			ctx.runOnClient(mc -> FramecraftConfig.showCameraInfo = true);
+			ctx.takeScreenshot("framecrafter-1-near-f1.2");
+			ctx.runOnClient(mc -> FramecrafterConfig.showCameraInfo = true);
 			ctx.waitTicks(2);
-			ctx.takeScreenshot("framecraft-1a-camera-info");
-			ctx.runOnClient(mc -> FramecraftConfig.showCameraInfo = false);
-			System.setProperty("framecraft.debugDepth", "true");
+			ctx.takeScreenshot("framecrafter-1a-camera-info");
+			ctx.runOnClient(mc -> FramecrafterConfig.showCameraInfo = false);
+			System.setProperty("framecrafter.debugDepth", "true");
 			ctx.waitTicks(2);
-			ctx.takeScreenshot("framecraft-1b-depth-debug");
-			System.setProperty("framecraft.debugDepth", "false");
+			ctx.takeScreenshot("framecrafter-1b-depth-debug");
+			System.setProperty("framecrafter.debugDepth", "false");
 			ctx.getInput().releaseKey(o -> o.keyUse);
 			ctx.waitTicks(2);
 			expect(ctx, AfState.IDLE, "after releasing AF");
@@ -89,7 +89,7 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.waitTicks(30);
 			expect(ctx, AfState.SHARP, "focusing the red wool off-centre");
 			expectFocus(ctx, 9.0, 11.0, "red wool");
-			ctx.takeScreenshot("framecraft-2-offcentre-red-f1.2");
+			ctx.takeScreenshot("framecrafter-2-offcentre-red-f1.2");
 			ctx.getInput().releaseKey(o -> o.keyUse);
 
 			// Leaving and re-entering camera mode puts the focus point back in the centre.
@@ -105,7 +105,7 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.getInput().holdKey(o -> o.keyUse);
 			ctx.waitTicks(30);
 			expect(ctx, AfState.FAILED, "a subject closer than the minimum focus distance");
-			ctx.takeScreenshot("framecraft-5-too-close");
+			ctx.takeScreenshot("framecrafter-5-too-close");
 			ctx.getInput().releaseKey(o -> o.keyUse);
 
 			// Open sky: nothing to focus on.
@@ -120,11 +120,11 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.getInput().holdKey(o -> o.keyUse);
 			ctx.waitTicks(40);
 			expect(ctx, AfState.SHARP, "135 mm on the gold pillar");
-			ctx.takeScreenshot("framecraft-4-135mm-f1.2");
-			ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.HEXAGON);
+			ctx.takeScreenshot("framecrafter-4-135mm-f1.2");
+			ctx.runOnClient(mc -> FramecrafterConfig.bokeh = FramecrafterConfig.Bokeh.HEXAGON);
 			ctx.waitTicks(2);
-			ctx.takeScreenshot("framecraft-4a-135mm-f1.2-hexagon");
-			ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.ROUND);
+			ctx.takeScreenshot("framecrafter-4a-135mm-f1.2-hexagon");
+			ctx.runOnClient(mc -> FramecrafterConfig.bokeh = FramecrafterConfig.Bokeh.ROUND);
 			ctx.getInput().releaseKey(o -> o.keyUse);
 
 			ctx.runOnClient(mc -> resetSettings());
@@ -134,25 +134,25 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.waitTicks(2);
 			ctx.getInput().releaseKey(InputConstants.KEY_X);
 			ctx.waitTicks(5);
-			boolean menuOpen = ctx.computeOnClient(mc -> mc.gui.screen() instanceof io.github.sajibsrs.framecraft.FramecraftSettingsScreen);
+			boolean menuOpen = ctx.computeOnClient(mc -> mc.gui.screen() instanceof io.github.sajibsrs.framecrafter.FramecrafterSettingsScreen);
 			if (!menuOpen) {
 				throw new AssertionError("X did not open the camera menu in camera mode");
 			}
-			ctx.takeScreenshot("framecraft-6-menu");
+			ctx.takeScreenshot("framecrafter-6-menu");
 			ctx.runOnClient(mc -> mc.gui.setScreen(null));
 			ctx.runOnClient(mc -> CameraState.zoom(-13));
 
 			// Lens and body character: 14 mm with distortion and vignetting, tungsten WB, grain 6.
 			ctx.runOnClient(mc -> {
 				CameraState.zoom(-30);
-				FramecraftConfig.distortion = true;
-				FramecraftConfig.vignetting = true;
-				FramecraftConfig.whiteBalance = FramecraftConfig.WhiteBalance.TUNGSTEN;
-				FramecraftConfig.grain = 6;
-				FramecraftConfig.showCameraInfo = true;
+				FramecrafterConfig.distortion = true;
+				FramecrafterConfig.vignetting = true;
+				FramecrafterConfig.whiteBalance = FramecrafterConfig.WhiteBalance.TUNGSTEN;
+				FramecrafterConfig.grain = 6;
+				FramecrafterConfig.showCameraInfo = true;
 			});
 			ctx.waitTicks(20);
-			ctx.takeScreenshot("framecraft-7-14mm-tungsten-grain6");
+			ctx.takeScreenshot("framecrafter-7-14mm-tungsten-grain6");
 			ctx.runOnClient(mc -> {
 				resetSettings();
 				CameraState.zoom(Math.log(50.0 / 14.0) / Math.log(1.08)); // back to 50 mm
@@ -165,23 +165,23 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			});
 			ctx.getInput().holdKey(o -> o.keyUse);
 			ctx.waitTicks(40);
-			ctx.takeScreenshot("framecraft-3-near-f22");
+			ctx.takeScreenshot("framecrafter-3-near-f22");
 			ctx.getInput().releaseKey(o -> o.keyUse);
 
-			// Shutter writes a framecraft_*.png into screenshots/.
+			// Shutter writes a framecrafter_*.png into screenshots/.
 			// With Camera Info on, the photo carries the info panel.
 			File shots = ctx.computeOnClient(mc -> new File(mc.gameDirectory, "screenshots"));
 			int before = countPhotos(shots);
 			ctx.runOnClient(mc -> {
-				FramecraftConfig.showCameraInfo = true;
+				FramecrafterConfig.showCameraInfo = true;
 				CameraState.requestCapture();
 			});
 			ctx.waitTicks(20);
-			ctx.runOnClient(mc -> FramecraftConfig.showCameraInfo = false);
+			ctx.runOnClient(mc -> FramecrafterConfig.showCameraInfo = false);
 			if (countPhotos(shots) <= before) {
 				throw new AssertionError("Shutter did not save a photo in " + shots);
 			}
-			File[] notes = shots.listFiles((d, n) -> n.startsWith("framecraft_") && n.endsWith(".txt"));
+			File[] notes = shots.listFiles((d, n) -> n.startsWith("framecrafter_") && n.endsWith(".txt"));
 			if (notes != null && notes.length > 0) {
 				throw new AssertionError("Shutter wrote a text file beside the photo in " + shots);
 			}
@@ -224,9 +224,9 @@ public class FramecraftClientTest implements FabricClientGameTest {
 				CameraState.blurRadiusPx(wallM, c[2], mc.gameRenderer.mainRenderTarget().height));
 			double tanV = ctx.computeOnClient(mc -> Math.tan(Math.toRadians(CameraState.verticalFovDeg()) / 2.0));
 			java.nio.file.Path png = ctx.takeScreenshot(String.format(java.util.Locale.ROOT,
-				"framecraft-cal-%dmm-f%.1f-s%.0f-at%.1f", (int) c[0], c[1], c[2], wallM));
+				"framecrafter-cal-%dmm-f%.1f-s%.0f-at%.1f", (int) c[0], c[1], c[2], wallM));
 			double measured = edgeRadius(png, edgeOffsetM / wallM / tanV, expected);
-			System.out.printf(java.util.Locale.ROOT, "[framecraft-cal] %dmm f/%.1f focus %.1f m, wall %.1f m: expected R %.2f px, measured %.2f px%n",
+			System.out.printf(java.util.Locale.ROOT, "[framecrafter-cal] %dmm f/%.1f focus %.1f m, wall %.1f m: expected R %.2f px, measured %.2f px%n",
 				(int) c[0], c[1], c[2], wallM, expected, measured);
 			// About a pixel of the edge's own antialiasing remains at small radii. A shader pack's
 			// tone curve and bloom reshape the edge profile, so allow more there.
@@ -242,14 +242,14 @@ public class FramecraftClientTest implements FabricClientGameTest {
 		sp.getServer().runCommand("summon minecraft:pillager 0.5 -60 1.5 {NoAI:1b,Rotation:[180f,0f]}");
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 3.0));
 		ctx.waitTicks(20);
-		ctx.takeScreenshot("framecraft-entity-focused-3m");
+		ctx.takeScreenshot("framecrafter-entity-focused-3m");
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 30.0));
 		ctx.waitTicks(20);
-		ctx.takeScreenshot("framecraft-entity-foreground-focus30");
-		System.setProperty("framecraft.debugDepth", "true");
+		ctx.takeScreenshot("framecrafter-entity-foreground-focus30");
+		System.setProperty("framecrafter.debugDepth", "true");
 		ctx.waitTicks(2);
-		ctx.takeScreenshot("framecraft-entity-foreground-depth");
-		System.setProperty("framecraft.debugDepth", "false");
+		ctx.takeScreenshot("framecrafter-entity-foreground-depth");
+		System.setProperty("framecrafter.debugDepth", "false");
 		sp.getServer().runCommand("kill @e[type=minecraft:pillager]");
 
 		// Bokeh shapes: wall torches facing the lens are small bright points on a black wall
@@ -264,21 +264,21 @@ public class FramecraftClientTest implements FabricClientGameTest {
 		}
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 31.5));
 		ctx.waitTicks(60);
-		ctx.takeScreenshot("framecraft-bokeh-sharp");
+		ctx.takeScreenshot("framecrafter-bokeh-sharp");
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 1.5));
-		for (FramecraftConfig.Bokeh shape : FramecraftConfig.Bokeh.values()) {
-			ctx.runOnClient(mc -> FramecraftConfig.bokeh = shape);
+		for (FramecrafterConfig.Bokeh shape : FramecrafterConfig.Bokeh.values()) {
+			ctx.runOnClient(mc -> FramecrafterConfig.bokeh = shape);
 			ctx.waitTicks(10);
-			ctx.takeScreenshot("framecraft-bokeh-" + shape.name().toLowerCase(java.util.Locale.ROOT));
+			ctx.takeScreenshot("framecrafter-bokeh-" + shape.name().toLowerCase(java.util.Locale.ROOT));
 		}
 		// A bright subject in focus is not a bokeh source: no glow may spread from it onto
 		// the blurred wall behind.
 		sp.getServer().runCommand("fill 0 -60 2 0 -57 2 minecraft:glowstone");
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 3.5));
 		ctx.waitTicks(10);
-		ctx.takeScreenshot("framecraft-bokeh-subject-in-focus");
+		ctx.takeScreenshot("framecrafter-bokeh-subject-in-focus");
 		sp.getServer().runCommand("fill 0 -60 2 0 -57 2 air");
-		ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.ROUND);
+		ctx.runOnClient(mc -> FramecrafterConfig.bokeh = FramecrafterConfig.Bokeh.ROUND);
 		sp.getServer().runCommand("time set noon");
 
 		// Leaves against the sky, out of focus: the sky gaps must blur like the sky, not
@@ -293,24 +293,24 @@ public class FramecraftClientTest implements FabricClientGameTest {
 		sp.getServer().runCommand("tp @p 0.5 -60 -1.5 0 -25");
 		ctx.runOnClient(mc -> setLens(85, 1.2f, 1.5));
 		ctx.waitTicks(20);
-		ctx.takeScreenshot("framecraft-bokeh-leaves-sky");
+		ctx.takeScreenshot("framecrafter-bokeh-leaves-sky");
 		sp.getServer().runCommand("fill -5 -56 10 5 -49 10 air");
 		ctx.runOnClient(mc -> mc.gui.hud.toggle());
 	}
 
 	/** Neutral body and lens, so the calibration sees the DOF alone. */
 	private static void resetSettings() {
-		FramecraftConfig.isoIndex = FramecraftConfig.BASE_ISO_INDEX;
-		FramecraftConfig.grain = 0;
-		FramecraftConfig.whiteBalance = FramecraftConfig.WhiteBalance.CUSTOM;
-		FramecraftConfig.customKelvin = 5500;
-		FramecraftConfig.tint = 0;
-		FramecraftConfig.pictureStyle = FramecraftConfig.PictureStyle.STANDARD;
-		FramecraftConfig.vignetting = false;
-		FramecraftConfig.distortion = false;
-		FramecraftConfig.showCameraInfo = false;
-		FramecraftConfig.showGrid = true;
-		FramecraftConfig.showHints = true;
+		FramecrafterConfig.isoIndex = FramecrafterConfig.BASE_ISO_INDEX;
+		FramecrafterConfig.grain = 0;
+		FramecrafterConfig.whiteBalance = FramecrafterConfig.WhiteBalance.CUSTOM;
+		FramecrafterConfig.customKelvin = 5500;
+		FramecrafterConfig.tint = 0;
+		FramecrafterConfig.pictureStyle = FramecrafterConfig.PictureStyle.STANDARD;
+		FramecrafterConfig.vignetting = false;
+		FramecrafterConfig.distortion = false;
+		FramecrafterConfig.showCameraInfo = false;
+		FramecrafterConfig.showGrid = true;
+		FramecrafterConfig.showHints = true;
 	}
 
 	private static void setLens(double focalMm, float fNumber, double focusM) {
@@ -405,7 +405,7 @@ public class FramecraftClientTest implements FabricClientGameTest {
 	}
 
 	private static int countPhotos(File dir) {
-		File[] files = dir.listFiles((d, name) -> name.startsWith("framecraft_") && name.endsWith(".png"));
+		File[] files = dir.listFiles((d, name) -> name.startsWith("framecrafter_") && name.endsWith(".png"));
 		return files == null ? 0 : files.length;
 	}
 }

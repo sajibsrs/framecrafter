@@ -1,4 +1,4 @@
-package io.github.sajibsrs.framecraft;
+package io.github.sajibsrs.framecrafter;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -9,9 +9,9 @@ import java.util.Locale;
 import java.util.Properties;
 import net.fabricmc.loader.api.FabricLoader;
 
-/** Camera settings, kept in config/framecraft.properties. */
-public final class FramecraftConfig {
-	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("framecraft.properties");
+/** Camera settings, kept in config/framecrafter.properties. */
+public final class FramecrafterConfig {
+	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("framecrafter.properties");
 
 	/** ISO in third stops. ISO 800 shows the scene as the game draws it; each stop is ±1 EV. */
 	public static final int[] ISO_STOPS = {100, 125, 160, 200, 250, 320, 400, 500, 640, 800,
@@ -92,7 +92,7 @@ public final class FramecraftConfig {
 	public static boolean showGrid = true;
 	public static boolean showHints = true;
 
-	private FramecraftConfig() {
+	private FramecrafterConfig() {
 	}
 
 	public static int iso() {
@@ -121,7 +121,7 @@ public final class FramecraftConfig {
 		try (Reader r = Files.newBufferedReader(FILE)) {
 			p.load(r);
 		} catch (IOException e) {
-			Framecraft.LOGGER.warn("Could not read {}", FILE, e);
+			Framecrafter.LOGGER.warn("Could not read {}", FILE, e);
 			return;
 		}
 		if (p.containsKey("iso")) {
@@ -161,10 +161,10 @@ public final class FramecraftConfig {
 		try {
 			Files.createDirectories(FILE.getParent());
 			try (Writer w = Files.newBufferedWriter(FILE)) {
-				p.store(w, "Framecraft settings");
+				p.store(w, "Framecrafter settings");
 			}
 		} catch (IOException e) {
-			Framecraft.LOGGER.warn("Could not write {}", FILE, e);
+			Framecrafter.LOGGER.warn("Could not write {}", FILE, e);
 		}
 	}
 

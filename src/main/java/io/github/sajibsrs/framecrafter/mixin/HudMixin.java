@@ -1,7 +1,7 @@
-package io.github.sajibsrs.framecraft.mixin;
+package io.github.sajibsrs.framecrafter.mixin;
 
-import io.github.sajibsrs.framecraft.CameraState;
-import io.github.sajibsrs.framecraft.Viewfinder;
+import io.github.sajibsrs.framecrafter.CameraState;
+import io.github.sajibsrs.framecrafter.Viewfinder;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -22,7 +22,7 @@ public class HudMixin {
 	@Shadow private boolean isHidden;
 
 	@Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
-	private void framecraft$viewfinder(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+	private void framecrafter$viewfinder(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
 		if (!CameraState.isActive()) {
 			return;
 		}
@@ -42,7 +42,7 @@ public class HudMixin {
 	 * hand, and vanilla before drawing the block outline; neither belongs in a photo.
 	 */
 	@Inject(method = "isHidden", at = @At("HEAD"), cancellable = true)
-	private void framecraft$hiddenInCameraMode(CallbackInfoReturnable<Boolean> cir) {
+	private void framecrafter$hiddenInCameraMode(CallbackInfoReturnable<Boolean> cir) {
 		if (CameraState.isActive()) {
 			cir.setReturnValue(true);
 		}

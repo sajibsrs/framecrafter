@@ -1,7 +1,7 @@
-package io.github.sajibsrs.framecraft.mixin;
+package io.github.sajibsrs.framecrafter.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import io.github.sajibsrs.framecraft.CameraState;
+import io.github.sajibsrs.framecrafter.CameraState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import org.spongepowered.asm.mixin.Final;
@@ -20,8 +20,8 @@ public class MouseHandlerMixin {
 
 	/** Ctrl + mouse move slides the focus point instead of turning the view. */
 	@Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
-	private void framecraft$moveFocusPoint(double mousea, CallbackInfo ci) {
-		if (!CameraState.isActive() || this.minecraft.gui.screen() != null || !framecraft$ctrlDown()) {
+	private void framecrafter$moveFocusPoint(double mousea, CallbackInfo ci) {
+		if (!CameraState.isActive() || this.minecraft.gui.screen() != null || !framecrafter$ctrlDown()) {
 			return;
 		}
 		CameraState.moveFocusPoint(this.accumulatedDX, this.accumulatedDY,
@@ -29,19 +29,19 @@ public class MouseHandlerMixin {
 		ci.cancel();
 	}
 
-	private static boolean framecraft$ctrlDown() {
+	private static boolean framecrafter$ctrlDown() {
 		return InputConstants.isKeyDown(InputConstants.KEY_LCONTROL) || InputConstants.isKeyDown(InputConstants.KEY_RCONTROL);
 	}
 
 	@Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
-	private void framecraft$lensControls(long handle, double xoffset, double yoffset, CallbackInfo ci) {
+	private void framecrafter$lensControls(long handle, double xoffset, double yoffset, CallbackInfo ci) {
 		if (!CameraState.isActive() || this.minecraft.gui.screen() != null || this.minecraft.player == null) {
 			return;
 		}
 		if (handle == 0L || handle != this.minecraft.getWindow().handle() || yoffset == 0.0) {
 			return;
 		}
-		if (framecraft$ctrlDown()) {
+		if (framecrafter$ctrlDown()) {
 			// Scroll up opens the aperture (smaller f-number), like turning toward wide open.
 			CameraState.stepAperture(yoffset > 0 ? -1 : 1);
 		} else {
