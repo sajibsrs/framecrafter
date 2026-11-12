@@ -20,6 +20,13 @@ processResources {
 	}
 }
 
+// The MIT licence requires its text to travel with the jar.
+jar {
+	from('LICENSE') {
+		rename { "LICENSE_framecraft" }
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 }

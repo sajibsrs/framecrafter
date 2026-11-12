@@ -5,6 +5,11 @@
 	"name": "Framecraft",
 	"description": "A camera for Minecraft: focal length, aperture and real depth of field.",
 	"authors": ["sajibsrs"],
+	"contact": {
+		"homepage": "https://github.com/sajibsrs/framecraft",
+		"sources": "https://github.com/sajibsrs/framecraft",
+		"issues": "https://github.com/sajibsrs/framecraft/issues"
+	},
 	"license": "MIT",
 	"environment": "client",
 	"entrypoints": {
