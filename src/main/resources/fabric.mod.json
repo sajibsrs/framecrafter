@@ -11,6 +11,7 @@
 		"issues": "https://github.com/sajibsrs/framecraft/issues"
 	},
 	"license": "MIT",
+	"icon": "assets/framecraft/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"client": ["io.github.sajibsrs.framecraft.Framecraft"]
