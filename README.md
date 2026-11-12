@@ -11,6 +11,10 @@ A camera for Minecraft (Fabric, 26.3). Press `V` to look through a full-frame ca
 - **Exposure and colour**: ISO for brightness, film grain, white balance, tint and picture styles, plus lens vignetting and distortion.
 - **Shutter** saves a clean `framecraft_*.png` to `screenshots/`, without the viewfinder.
 
+![Camera menu over the viewfinder: ISO, grain, white balance, Kelvin, tint, picture style, vignetting, distortion, bokeh, camera info, thirds grid and hints](docs/screenshots/camera-menu.jpg)
+
+The camera menu (`X`), open over the viewfinder. Every setting is covered under [Camera menu](#camera-menu-x).
+
 ## Gallery
 
 Straight out of the camera, no edits.
