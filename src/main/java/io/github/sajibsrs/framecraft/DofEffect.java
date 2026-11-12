@@ -16,8 +16,9 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 /**
- * Drives the framecraft:dof post chain: the depth-of-field pass, then the grade pass (lens
- * distortion, vignetting, exposure, white balance, picture style, ISO grain). Vanilla
+ * Drives the framecraft:dof post chain: two highlight-spread passes that feed the bokeh, the
+ * depth-of-field pass, a smoothing pass that removes the gather's grain, then the grade pass (lens
+ * distortion, vignetting, exposure, white balance, picture style, grain). Vanilla
  * post-effect uniforms are fixed at load time, so each pass's config buffer is swapped for a
  * writable one and refreshed every frame.
  */
@@ -100,7 +101,7 @@ public final class DofEffect {
 					Std140Builder builder = Std140Builder.onStack(stack, BLOCK_SIZE);
 					builder.putVec4((float) focusM, apertureDiameter, focal, pxPerSensorMeter);
 					builder.putVec4(a, bMeters, maxRadius, sampleCount);
-					builder.putVec4(skyDepth, debugDepth ? 1f : 0f, 0f, 0f);
+					builder.putVec4(skyDepth, debugDepth ? 1f : 0f, FramecraftConfig.bokeh.blades, 0f);
 					RenderSystem.getDevice().createCommandEncoder().writeToBuffer(dof.slice(), builder.get());
 				}
 			}
@@ -109,10 +110,10 @@ public final class DofEffect {
 				int width = mc.gameRenderer.mainRenderTarget().width;
 				float[] wb = whiteBalanceGain(FramecraftConfig.kelvin(), FramecraftConfig.effectiveTint());
 				FramecraftConfig.PictureStyle style = FramecraftConfig.pictureStyle;
-				float grain = 0.01f * (float) (Math.log(FramecraftConfig.iso() / 100.0) / Math.log(2.0));
+				float grain = 0.01f * FramecraftConfig.grain;
 				try (MemoryStack stack = MemoryStack.stackPush()) {
 					Std140Builder builder = Std140Builder.onStack(stack, GRADE_BLOCK_SIZE);
-					builder.putVec4((float) Math.pow(2.0, FramecraftConfig.exposureEv), grain, style.contrast, style.saturation);
+					builder.putVec4((float) Math.pow(2.0, FramecraftConfig.exposureEv()), grain, style.contrast, style.saturation);
 					builder.putVec4(wb[0], wb[1], wb[2], 0f);
 					builder.putVec4(CameraState.distortionK(), CameraState.vignetteEv(), frame, (float) width / Math.max(1, height));
 					builder.putVec4(debugDepth ? 1f : 0f, 0f, 0f, 0f);

@@ -7,17 +7,19 @@
 
 uniform sampler2D InSampler;
 uniform sampler2D DepthSampler;
+uniform sampler2D GlowSampler;
 
 layout(std140) uniform SamplerInfo {
     vec2 OutSize;
     vec2 InSize;
     vec2 DepthSize;
+    vec2 GlowSize;
 };
 
 layout(std140) uniform DofConfig {
     vec4 Lens;        // focus distance (m), aperture diameter (m), focal length (m), pixels per sensor meter
     vec4 DepthParams; // depth a, depth b (d = a + b/z), max blur radius (px), sample count
-    vec4 Extra;       // depth value of the sky, debug view flag
+    vec4 Extra;       // depth value of the sky, debug view flag, aperture blades (0 = round)
 };
 
 layout(location = 0) in vec2 texCoord;
@@ -42,6 +44,39 @@ float blurRadius(float z) {
     float f = Lens.z;
     float coc = A * f * abs(z - s) / (z * max(s - f, 1e-4));
     return min(0.5 * coc * Lens.w, DepthParams.z);
+}
+
+// How far the aperture reaches in direction theta, as a fraction of the blur radius.
+// A regular polygon inscribed in the blur circle, one corner pointing up (as an iris
+// stopped down looks); 1 everywhere for a round aperture.
+float apertureReach(float theta) {
+    float n = Extra.z;
+    if (n < 2.5) {
+        return 1.0;
+    }
+    float seg = 6.2831853 / n;
+    float a = mod(theta - 1.5707963, seg) - 0.5 * seg;
+    return cos(0.5 * seg) / cos(a);
+}
+
+// Near-clipped, out-of-focus pixels count for far more (see highlight.fsh). A lamp is many
+// times brighter than white paper, but an 8-bit frame stores both as about 1.0, so a plain
+// average spreads a small light into a faint smudge; the extra weight restores some of that
+// range and lets lights open into clear aperture shapes.
+const float MAX_EXCESS = 80.0;
+
+// How much a pixel acts as a bokeh source: none while it is in focus, fully once its blur
+// circle is a few pixels wide. Must match highlight.fsh.
+float bokehAmount(float r) {
+    return smoothstep(3.0, 8.0, r);
+}
+
+// Extra weight a tap adds (rgb: weight * colour, a: weight), read from the spread map that
+// highlight.fsh builds from out-of-focus pixels only, so a small light is caught by every tap
+// inside its blur circle and a sharp bright surface adds none.
+vec4 tapExcess(vec2 uv, float r) {
+    vec4 g = texture(GlowSampler, uv);
+    return g * g * MAX_EXCESS * bokehAmount(r);
 }
 
 // Per-pixel spiral rotation turns ring banding into fine noise.
@@ -71,11 +106,14 @@ void main() {
     float angle = noise * 6.2831853;
     float jitter = fract(noise * 7.31);
     float dr = maxR / float(count);
-    float total = 0.25 * dr * dr; // the centre tap stands for a disc of radius dr/2 (pi cancels)
-    vec3 sum = color * total;
+    float centreArea = 0.25 * dr * dr; // the centre tap stands for a disc of radius dr/2 (pi cancels)
+    vec4 centreExcess = tapExcess(texCoord, centerR);
+    vec3 sum = centreArea * (color + centreExcess.rgb);
+    float total = centreArea * (1.0 + centreExcess.a);
     for (int i = 0; i < count; i++) {
         float radius = (float(i) + jitter) * dr;
-        vec2 uv = texCoord + vec2(cos(angle), sin(angle)) * texel * radius;
+        vec2 dir = vec2(cos(angle), sin(angle));
+        vec2 uv = texCoord + dir * texel * radius;
         angle += GOLDEN_ANGLE;
         vec3 sampleColor = texture(InSampler, uv).rgb;
         float sampleZ = distanceAt(uv);
@@ -84,11 +122,15 @@ void main() {
         if (sampleZ > centerZ) {
             sampleR = clamp(sampleR, 0.0, centerR * 2.0);
         }
+        // The tap's blur is the aperture shape centred on the tap; this pixel lies back along
+        // -dir from it. Screen y runs up in texture space, matching the corner-up polygon.
+        sampleR *= apertureReach(atan(-dir.y, -dir.x));
         float hit = smoothstep(radius - 0.5, radius + 0.5, sampleR);
         float area = 2.0 * radius * dr;
         // A tap whose blur doesn't reach this pixel stands in with the average so far.
-        sum += area * mix(sum / total, sampleColor, hit);
-        total += area;
+        vec4 excess = tapExcess(uv, sampleR) * hit;
+        sum += area * (mix(sum / total, sampleColor, hit) + excess.rgb);
+        total += area * (1.0 + excess.a);
     }
 
     fragColor = vec4(sum / total, 1.0);

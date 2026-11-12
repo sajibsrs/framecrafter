@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : require
 
 // Camera body and lens character, after the depth of field:
-// lens distortion, vignetting, exposure, white balance, picture style and ISO grain.
+// lens distortion, vignetting, exposure, white balance, picture style and grain.
 
 uniform sampler2D InSampler;
 
@@ -66,7 +66,7 @@ void main() {
     float luma = dot(disp, LUMA);
     disp = mix(vec3(luma), disp, Tone.w);
 
-    // ISO grain: triangular noise, stronger in the shadows, changing every frame.
+    // Grain: triangular noise, stronger in the shadows, changing every frame.
     if (Tone.y > 0.0) {
         float n = hash(gl_FragCoord.xy, Lens.z) + hash(gl_FragCoord.xy + 17.0, Lens.z + 3.0) - 1.0;
         disp += n * Tone.y * (1.25 - 0.75 * clamp(luma, 0.0, 1.0));

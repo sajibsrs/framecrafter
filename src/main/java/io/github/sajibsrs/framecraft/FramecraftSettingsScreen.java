@@ -1,5 +1,6 @@
 package io.github.sajibsrs.framecraft;
 
+import io.github.sajibsrs.framecraft.FramecraftConfig.Bokeh;
 import io.github.sajibsrs.framecraft.FramecraftConfig.PictureStyle;
 import io.github.sajibsrs.framecraft.FramecraftConfig.WhiteBalance;
 import java.util.ArrayList;
@@ -43,14 +44,14 @@ public final class FramecraftSettingsScreen extends Screen {
 		List<AbstractWidget> w = new ArrayList<>();
 
 		// Exposure and colour
-		w.add(new StepSlider(steps(FramecraftConfig.MIN_EV, FramecraftConfig.MAX_EV, 1.0 / 3.0), FramecraftConfig.exposureEv,
-			v -> String.format(Locale.ROOT, "Exposure: %+.1f EV", v), v -> FramecraftConfig.exposureEv = (float) v));
 		double[] isos = new double[FramecraftConfig.ISO_STOPS.length];
 		for (int i = 0; i < isos.length; i++) {
 			isos[i] = FramecraftConfig.ISO_STOPS[i];
 		}
 		w.add(new StepSlider(isos, FramecraftConfig.iso(),
 			v -> "ISO: " + (int) v, v -> FramecraftConfig.isoIndex = indexOf(FramecraftConfig.ISO_STOPS, (int) v)));
+		w.add(new StepSlider(steps(0, FramecraftConfig.MAX_GRAIN, 1), FramecraftConfig.grain,
+			v -> v == 0 ? "Grain: Off" : "Grain: " + (int) v, v -> FramecraftConfig.grain = (int) v));
 		wbButton = CycleButton.<WhiteBalance>builder(wb -> Component.literal(wb.label), FramecraftConfig.whiteBalance)
 			.withValues(WhiteBalance.values())
 			.create(Component.translatable("framecraft.settings.whiteBalance"), (b, v) -> {
@@ -71,6 +72,9 @@ public final class FramecraftSettingsScreen extends Screen {
 		// Lens
 		w.add(toggle("vignetting", FramecraftConfig.vignetting, v -> FramecraftConfig.vignetting = v));
 		w.add(toggle("distortion", FramecraftConfig.distortion, v -> FramecraftConfig.distortion = v));
+		w.add(CycleButton.<Bokeh>builder(s -> Component.literal(s.label), FramecraftConfig.bokeh)
+			.withValues(Bokeh.values())
+			.create(Component.translatable("framecraft.settings.bokeh"), (b, v) -> FramecraftConfig.bokeh = v));
 
 		// Viewfinder
 		w.add(toggle("showCameraInfo", FramecraftConfig.showCameraInfo, v -> FramecraftConfig.showCameraInfo = v));

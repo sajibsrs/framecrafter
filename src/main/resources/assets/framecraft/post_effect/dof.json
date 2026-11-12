@@ -1,14 +1,56 @@
 {
     "targets": {
-        "swap": {}
+        "swap": {},
+        "smooth": {},
+        "glow_h": {},
+        "glow": {}
     },
     "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "framecraft:post/highlight",
+            "inputs": [
+                { "sampler_name": "In", "target": "minecraft:main" },
+                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+            ],
+            "output": "glow_h",
+            "uniforms": {
+                "DofConfig": [
+                    { "name": "Lens", "type": "vec4", "value": [ 5.0, 0.0, 0.05, 45000.0 ] },
+                    { "name": "DepthParams", "type": "vec4", "value": [ 0.0, 0.05, 16.0, 32.0 ] },
+                    { "name": "Extra", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 0.0 ] }
+                ],
+                "HighlightConfig": [
+                    { "name": "Dir", "type": "vec4", "value": [ 1.0, 0.0, 1.0, 0.0 ] }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "framecraft:post/highlight",
+            "inputs": [
+                { "sampler_name": "In", "target": "glow_h" },
+                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+            ],
+            "output": "glow",
+            "uniforms": {
+                "DofConfig": [
+                    { "name": "Lens", "type": "vec4", "value": [ 5.0, 0.0, 0.05, 45000.0 ] },
+                    { "name": "DepthParams", "type": "vec4", "value": [ 0.0, 0.05, 16.0, 32.0 ] },
+                    { "name": "Extra", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 0.0 ] }
+                ],
+                "HighlightConfig": [
+                    { "name": "Dir", "type": "vec4", "value": [ 0.0, 1.0, 0.0, 0.0 ] }
+                ]
+            }
+        },
         {
             "vertex_shader": "minecraft:core/screenquad",
             "fragment_shader": "framecraft:post/dof",
             "inputs": [
                 { "sampler_name": "In", "target": "minecraft:main", "bilinear": true },
-                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 },
+                { "sampler_name": "Glow", "target": "glow", "bilinear": true }
             ],
             "output": "swap",
             "uniforms": {
@@ -21,9 +63,25 @@
         },
         {
             "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "framecraft:post/dof_smooth",
+            "inputs": [
+                { "sampler_name": "In", "target": "swap", "bilinear": true },
+                { "sampler_name": "Depth", "location": "framecraft:scene_depth", "width": 1, "height": 1 }
+            ],
+            "output": "smooth",
+            "uniforms": {
+                "DofConfig": [
+                    { "name": "Lens", "type": "vec4", "value": [ 5.0, 0.0, 0.05, 45000.0 ] },
+                    { "name": "DepthParams", "type": "vec4", "value": [ 0.0, 0.05, 16.0, 32.0 ] },
+                    { "name": "Extra", "type": "vec4", "value": [ 0.0, 0.0, 0.0, 0.0 ] }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
             "fragment_shader": "framecraft:post/grade",
             "inputs": [
-                { "sampler_name": "In", "target": "swap", "bilinear": true }
+                { "sampler_name": "In", "target": "smooth", "bilinear": true }
             ],
             "output": "minecraft:main",
             "uniforms": {

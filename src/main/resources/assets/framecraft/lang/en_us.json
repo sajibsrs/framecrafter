@@ -7,6 +7,7 @@
 	"framecraft.settings.pictureStyle": "Style",
 	"framecraft.settings.vignetting": "Vignetting",
 	"framecraft.settings.distortion": "Distortion",
+	"framecraft.settings.bokeh": "Bokeh",
 	"framecraft.settings.showCameraInfo": "Camera Info",
 	"framecraft.settings.showGrid": "Thirds Grid",
 	"framecraft.settings.showHints": "Hints"

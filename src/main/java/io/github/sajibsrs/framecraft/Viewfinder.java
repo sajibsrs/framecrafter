@@ -117,8 +117,8 @@ public final class Viewfinder {
 			CameraState.blurRadiusPx(1.0e5, s, frameH), CameraState.cocDiameterM(sharp, frameH) * 1.0e6,
 			DofEffect.sampleCount(frameH, CameraState.isCapturing()), frameW, frameH));
 		FramecraftConfig.WhiteBalance wb = FramecraftConfig.whiteBalance;
-		lines.add(String.format(Locale.ROOT, "Exposure %+.1fEV   ISO %d   WB %s %dK tint %+d   %s",
-			FramecraftConfig.exposureEv, FramecraftConfig.iso(), wb.label, FramecraftConfig.kelvin(),
+		lines.add(String.format(Locale.ROOT, "ISO %d (%+.1fEV)   grain %d   WB %s %dK tint %+d   %s",
+			FramecraftConfig.iso(), FramecraftConfig.exposureEv(), FramecraftConfig.grain, wb.label, FramecraftConfig.kelvin(),
 			FramecraftConfig.effectiveTint(), FramecraftConfig.pictureStyle.label));
 		lines.add(String.format(Locale.ROOT, "Vignette %.1f stops at corner   %s", CameraState.vignetteEv(),
 			k == 0f ? "rectilinear, no distortion"

@@ -121,6 +121,10 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.waitTicks(40);
 			expect(ctx, AfState.SHARP, "135 mm on the gold pillar");
 			ctx.takeScreenshot("framecraft-4-135mm-f1.2");
+			ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.HEXAGON);
+			ctx.waitTicks(2);
+			ctx.takeScreenshot("framecraft-4a-135mm-f1.2-hexagon");
+			ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.ROUND);
 			ctx.getInput().releaseKey(o -> o.keyUse);
 
 			ctx.runOnClient(mc -> resetSettings());
@@ -138,17 +142,17 @@ public class FramecraftClientTest implements FabricClientGameTest {
 			ctx.runOnClient(mc -> mc.gui.setScreen(null));
 			ctx.runOnClient(mc -> CameraState.zoom(-13));
 
-			// Lens and body character: 14 mm with distortion and vignetting, tungsten WB, ISO 6400.
+			// Lens and body character: 14 mm with distortion and vignetting, tungsten WB, grain 6.
 			ctx.runOnClient(mc -> {
 				CameraState.zoom(-30);
 				FramecraftConfig.distortion = true;
 				FramecraftConfig.vignetting = true;
 				FramecraftConfig.whiteBalance = FramecraftConfig.WhiteBalance.TUNGSTEN;
-				FramecraftConfig.isoIndex = 6;
+				FramecraftConfig.grain = 6;
 				FramecraftConfig.showCameraInfo = true;
 			});
 			ctx.waitTicks(20);
-			ctx.takeScreenshot("framecraft-7-14mm-tungsten-iso6400");
+			ctx.takeScreenshot("framecraft-7-14mm-tungsten-grain6");
 			ctx.runOnClient(mc -> {
 				resetSettings();
 				CameraState.zoom(Math.log(50.0 / 14.0) / Math.log(1.08)); // back to 50 mm
@@ -247,13 +251,57 @@ public class FramecraftClientTest implements FabricClientGameTest {
 		ctx.takeScreenshot("framecraft-entity-foreground-depth");
 		System.setProperty("framecraft.debugDepth", "false");
 		sp.getServer().runCommand("kill @e[type=minecraft:pillager]");
+
+		// Bokeh shapes: wall torches facing the lens are small bright points on a black wall
+		// 31.5 m away, far smaller than their blur, so each spreads into the aperture's shape.
+		// At night, so the flames are the brightest points, as lamps are in a real
+		// night shot. The wait lets the pillager's death smoke clear from the foreground.
+		sp.getServer().runCommand("time set midnight");
+		sp.getServer().runCommand("fill -8 -61 30 9 -50 30 minecraft:black_concrete");
+		int[][] rods = {{0, -58}, {-2, -56}, {3, -56}, {-3, -59}, {2, -60}, {5, -58}, {-5, -57}};
+		for (int[] r : rods) {
+			sp.getServer().runCommand("setblock " + r[0] + " " + r[1] + " 29 minecraft:wall_torch[facing=north]");
+		}
+		ctx.runOnClient(mc -> setLens(85, 1.2f, 31.5));
+		ctx.waitTicks(60);
+		ctx.takeScreenshot("framecraft-bokeh-sharp");
+		ctx.runOnClient(mc -> setLens(85, 1.2f, 1.5));
+		for (FramecraftConfig.Bokeh shape : FramecraftConfig.Bokeh.values()) {
+			ctx.runOnClient(mc -> FramecraftConfig.bokeh = shape);
+			ctx.waitTicks(10);
+			ctx.takeScreenshot("framecraft-bokeh-" + shape.name().toLowerCase(java.util.Locale.ROOT));
+		}
+		// A bright subject in focus is not a bokeh source: no glow may spread from it onto
+		// the blurred wall behind.
+		sp.getServer().runCommand("fill 0 -60 2 0 -57 2 minecraft:glowstone");
+		ctx.runOnClient(mc -> setLens(85, 1.2f, 3.5));
+		ctx.waitTicks(10);
+		ctx.takeScreenshot("framecraft-bokeh-subject-in-focus");
+		sp.getServer().runCommand("fill 0 -60 2 0 -57 2 air");
+		ctx.runOnClient(mc -> FramecraftConfig.bokeh = FramecraftConfig.Bokeh.ROUND);
+		sp.getServer().runCommand("time set noon");
+
+		// Leaves against the sky, out of focus: the sky gaps must blur like the sky, not
+		// swell into white blobs (the sky is not a bokeh source).
+		for (int x = -5; x <= 5; x++) {
+			for (int y = -56; y <= -49; y++) {
+				if (((x * 7 + y * 3) & 3) != 0) {
+					sp.getServer().runCommand("setblock " + x + " " + y + " 10 minecraft:oak_leaves[persistent=true]");
+				}
+			}
+		}
+		sp.getServer().runCommand("tp @p 0.5 -60 -1.5 0 -25");
+		ctx.runOnClient(mc -> setLens(85, 1.2f, 1.5));
+		ctx.waitTicks(20);
+		ctx.takeScreenshot("framecraft-bokeh-leaves-sky");
+		sp.getServer().runCommand("fill -5 -56 10 5 -49 10 air");
 		ctx.runOnClient(mc -> mc.gui.hud.toggle());
 	}
 
 	/** Neutral body and lens, so the calibration sees the DOF alone. */
 	private static void resetSettings() {
-		FramecraftConfig.exposureEv = 0f;
-		FramecraftConfig.isoIndex = 0;
+		FramecraftConfig.isoIndex = FramecraftConfig.BASE_ISO_INDEX;
+		FramecraftConfig.grain = 0;
 		FramecraftConfig.whiteBalance = FramecraftConfig.WhiteBalance.CUSTOM;
 		FramecraftConfig.customKelvin = 5500;
 		FramecraftConfig.tint = 0;
