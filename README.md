@@ -17,9 +17,9 @@ Straight out of the camera, no edits.
 
 | | |
 |---|---|
-| ![Villager by a terracotta house, background softly blurred](docs/screenshots/villager.jpg) | ![Pillager aiming a crossbow, trees and water melting into bokeh](docs/screenshots/pillager.jpg) |
-| ![Spotted horse on grassy terraces, other horses out of focus](docs/screenshots/horse.jpg) | ![Wide savanna landscape with acacias and a stone outcrop](docs/screenshots/savanna.jpg) |
-| ![Close-up of a pumpkin with a row of pumpkins falling out of focus](docs/screenshots/pumpkins.jpg) | ![Chicken on a grass ledge in a savanna at golden hour](docs/screenshots/chicken.jpg) |
+| ![Villager by a terracotta house, background softly blurred](docs/screenshots/villager.jpg) | ![Pillager with a crossbow in tall grass under a tree, another pillager blurred behind](docs/screenshots/pillager.jpg) |
+| ![Spotted horse on grassy terraces, other horses out of focus](docs/screenshots/horse.jpg) | ![Savanna with acacia trees and terracotta hills under a clear sky](docs/screenshots/savanna.jpg) |
+| ![Close-up of a pumpkin with a row of pumpkins falling out of focus](docs/screenshots/pumpkins.jpg) | ![Pillager outpost seen through blurred tall grass in the foreground](docs/screenshots/tower.jpg) |
 
 ## Installing
 
